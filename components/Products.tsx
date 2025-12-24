@@ -1,60 +1,52 @@
 import React from 'react';
 import { PRODUCTS, WHATSAPP_LINK } from '../constants';
+import { ChevronRight } from 'lucide-react';
 
 const Products: React.FC = () => {
   return (
-    <section id="products" className="py-24 bg-white">
+    <section id="products" className="py-24 bg-slate-50 border-t border-slate-200">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-              Produtos em Destaque
+        <div className="text-center max-w-3xl mx-auto mb-20">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+              Nossos Produtos em Destaque
             </h2>
-            <p className="text-slate-600 text-lg">
-              Ferramentas poderosas desenhadas para resolver os desafios reais do seu dia a dia.
-            </p>
-          </div>
-          <a
-            href={WHATSAPP_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary-600 font-semibold hover:text-primary-700 flex items-center transition-colors"
-          >
-            Ver catálogo completo <span className="ml-2 text-xl">&rarr;</span>
-          </a>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {PRODUCTS.map((product) => (
-            <div key={product.id} className="group relative bg-white rounded-2xl overflow-hidden shadow-lg border border-slate-100 flex flex-col h-full hover:shadow-2xl transition-all duration-300">
-              <div className="relative h-48 overflow-hidden bg-slate-200">
+            <div key={product.id} className="group flex flex-col bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-primary-900/10 transition-all duration-500 border border-slate-100">
+              <div className="relative aspect-[4/3] overflow-hidden bg-slate-50/50 p-6 flex items-center justify-center">
                 {product.badge && (
-                  <span className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded shadow-sm z-10 uppercase tracking-wide">
+                  <span className="absolute top-4 left-4 bg-primary-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full z-10 uppercase tracking-wider shadow-lg">
                     {product.badge}
                   </span>
                 )}
                 <img
                   src={product.image}
                   alt={product.title}
-                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-500 drop-shadow-sm"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
-              <div className="p-6 flex-grow flex flex-col">
-                <h3 className="text-xl font-bold text-slate-900 mb-2">
+              
+              <div className="p-8 flex-grow flex flex-col">
+                <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-primary-600 transition-colors">
                   {product.title}
                 </h3>
-                <p className="text-slate-600 text-sm mb-6 flex-grow">
+                <p className="text-slate-500 text-sm leading-relaxed mb-8 flex-grow">
                   {product.description}
                 </p>
-                <a
-                  href={WHATSAPP_LINK}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 px-4 rounded-lg border border-primary-200 text-primary-600 font-semibold text-center hover:bg-primary-50 transition-colors mt-auto"
-                >
-                  Solicitar Demo
-                </a>
+                
+                <div className="mt-auto">
+                    <a
+                    href={WHATSAPP_LINK}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-4 rounded-xl flex items-center justify-center gap-2 bg-slate-50 text-slate-900 font-bold text-sm border border-slate-200 group-hover:bg-primary-600 group-hover:text-white group-hover:border-primary-600 transition-all duration-300"
+                    >
+                    Saiba Mais
+                    <ChevronRight size={16} />
+                    </a>
+                </div>
               </div>
             </div>
           ))}
