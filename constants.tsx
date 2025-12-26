@@ -43,7 +43,7 @@ export const PRODUCTS: Product[] = [
     id: 'print-app',
     title: 'Print APP',
     description: 'Solução de impressão móvel para agilizar suas operações.',
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800&h=600',
+    image: 'https://bixs.com.br/images/3.png',
   },
   {
     id: 'uai-pdv',
