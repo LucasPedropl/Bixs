@@ -31,7 +31,7 @@ export const SPECIALTIES: Specialty[] = [
   },
 ];
 
-// Ordem alterada para exibir Papi Fast, UAI PDV e Print APP primeiro
+// Ordem alterada para exibir Papi Fast e UAI PDV primeiro. Print APP removido.
 export const PRODUCTS: Product[] = [
   {
     id: 'papi-fast',
@@ -48,14 +48,6 @@ export const PRODUCTS: Product[] = [
     image: 'https://uaipdv.com.br/images/Logo7-removebg-preview.png',
     link: 'https://uaipdv.com.br',
     logoColor: 'bg-blue-50',
-  },
-  {
-    id: 'print-app',
-    title: 'Print APP',
-    description: 'Solução de impressão móvel para agilizar suas operações.',
-    image: 'https://bixs.com.br/images/3.png',
-    isComingSoon: true, // Em breve
-    logoColor: 'bg-indigo-50',
   },
   {
     id: 'uai-pdv-mais',
