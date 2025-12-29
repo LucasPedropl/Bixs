@@ -70,9 +70,9 @@ export const PRODUCTS: Product[] = [
     title: 'PagWeb',
     description: 'Solução de pagamentos web integrada e segura.',
     icon: (
-      <div className="flex items-center gap-2">
-        <Wallet className="w-10 h-10 text-slate-800" strokeWidth={2.5} />
-        <span className="text-3xl font-bold text-slate-800 tracking-tight">PagWeb</span>
+      <div className="flex items-center gap-3">
+        <Wallet className="w-16 h-16 text-slate-800" strokeWidth={2} />
+        <span className="text-4xl font-bold text-slate-800 tracking-tight">PagWeb</span>
       </div>
     ),
     logoColor: 'bg-emerald-50',
@@ -83,11 +83,11 @@ export const PRODUCTS: Product[] = [
     title: 'AgendaAi',
     description: 'Agendamento inteligente potencializado por IA.',
     icon: (
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
-          <Calendar className="w-7 h-7" />
+      <div className="flex items-center gap-4">
+        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+          <Calendar className="w-9 h-9" />
         </div>
-        <span className="text-3xl font-bold text-slate-900">AgendaAi</span>
+        <span className="text-4xl font-bold text-slate-900">AgendaAi</span>
       </div>
     ),
     logoColor: 'bg-blue-50',
@@ -100,10 +100,10 @@ export const PRODUCTS: Product[] = [
     icon: (
       <div className="flex flex-col items-center">
         <div className="relative">
-          <ShieldCheck className="w-16 h-16 text-primary-600" />
-          <div className="absolute -top-1 -right-1 bg-green-500 rounded-full w-5 h-5 border-2 border-white"></div>
+          <ShieldCheck className="w-20 h-20 text-primary-600" />
+          <div className="absolute -top-1 -right-1 bg-green-500 rounded-full w-6 h-6 border-4 border-white"></div>
         </div>
-        <span className="text-xl font-bold text-primary-700 mt-1">Agente+</span>
+        <span className="text-2xl font-bold text-primary-700 mt-2">Agente+</span>
       </div>
     ),
     logoColor: 'bg-violet-50',
