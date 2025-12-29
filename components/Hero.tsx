@@ -25,8 +25,8 @@ const Hero: React.FC = () => {
             </div>
             
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-[1.2] lg:leading-[1.1] mb-6 md:mb-8 tracking-tight">
-              Automação inteligente para o <br className="hidden md:block"/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-indigo-300">
+              Automação inteligente para <br className="hidden md:block"/>
+              o <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-indigo-300">
                 Sucesso do seu negócio!
               </span>
             </h1>
