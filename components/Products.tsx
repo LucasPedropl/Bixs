@@ -152,8 +152,8 @@ const Products: React.FC = () => {
 
                         <div className="relative z-10 flex flex-col h-full">
                         
-                        {/* Image/Icon Container */}
-                        <div className={`relative aspect-[4/3] rounded-[1.5rem] overflow-hidden ${product.logoColor || 'bg-slate-50'} flex items-center justify-center mb-4 transition-colors duration-500 group-hover/card:bg-opacity-80`}>
+                        {/* Image/Icon Container - Alterado para aspect-[3/2] (mais retangular/wide) */}
+                        <div className={`relative aspect-[3/2] rounded-[1.5rem] overflow-hidden ${product.logoColor || 'bg-slate-50'} flex items-center justify-center mb-4 transition-colors duration-500 group-hover/card:bg-opacity-80`}>
                             {product.badge && (
                             <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase text-slate-900 shadow-sm z-20">
                                 {product.badge}

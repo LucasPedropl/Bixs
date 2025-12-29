@@ -18,7 +18,7 @@ const Hero: React.FC = () => {
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
           
           {/* Left Content */}
-          <div className="flex-1 text-center lg:text-left w-full">
+          <div className="flex-1 text-center lg:text-left w-full lg:max-w-[50%]">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-white/5 border border-white/10 text-primary-200 font-medium text-xs md:text-sm mb-6 md:mb-8 backdrop-blur-sm">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
               Líder em Automação Comercial
@@ -54,27 +54,30 @@ const Hero: React.FC = () => {
             </div>
           </div>
           
-          {/* Right Content / Visual */}
-          <div className="hidden lg:block flex-1 w-full relative mt-8 lg:mt-0 px-2 sm:px-0">
-             <div className="relative z-10 rounded-2xl p-2 bg-gradient-to-br from-white/10 to-transparent border border-white/10 backdrop-blur-md shadow-2xl">
-                <img 
-                  src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2426" 
-                  alt="Dashboard BIXS" 
-                  className="rounded-xl w-full h-auto shadow-inner"
-                />
-                
-                {/* Floating Elements - Only Satisfaction Card kept */}
-                <div className="absolute -bottom-4 -left-4 md:-bottom-6 md:-left-6 bg-primary-600 text-white p-4 md:p-5 rounded-xl shadow-xl hidden xs:block">
-                     <p className="text-[10px] md:text-xs text-primary-200 uppercase font-bold mb-1">Satisfação</p>
-                     <div className="flex items-baseline gap-1">
-                        <span className="text-2xl md:text-3xl font-bold">98%</span>
-                        <span className="text-xs md:text-sm opacity-80">dos clientes</span>
-                     </div>
+          {/* Right Content / Visual Composition */}
+          <div className="hidden lg:flex flex-1 w-full justify-center items-center relative">
+             {/* Decorative Background Blur */}
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-primary-500/20 to-indigo-500/20 rounded-full blur-[80px] -z-10"></div>
+
+             {/* Single Notebook Image with Modern Frame */}
+             <div className="relative w-full max-w-[650px] transform hover:scale-[1.02] transition-transform duration-700 ease-out">
+                {/* Glassmorphism Border Container */}
+                <div className="p-3 md:p-4 bg-white/5 rounded-[2rem] border border-white/10 backdrop-blur-sm shadow-2xl shadow-primary-900/50">
+                    <div className="relative aspect-video rounded-[1.5rem] overflow-hidden bg-slate-900 shadow-inner group">
+                        <img 
+                            src="https://uaipdv.com.br/img/home/restore-icloud-itunes-backup-home-banner1.jpg" 
+                            alt="Notebook BIXS" 
+                            className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                        />
+                        {/* Overlay brilho sutil */}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent to-white/10 pointer-events-none mix-blend-overlay"></div>
+                    </div>
                 </div>
+                
+                {/* Decorative Elements */}
+                <div className="absolute -top-6 -right-6 w-24 h-24 bg-gradient-to-br from-primary-400/20 to-transparent rounded-full blur-xl animate-pulse"></div>
+                <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-gradient-to-tr from-indigo-500/20 to-transparent rounded-full blur-xl"></div>
              </div>
-             
-             {/* Decorative blob behind image */}
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-indigo-500/20 rounded-full blur-3xl -z-10"></div>
           </div>
         </div>
       </div>
