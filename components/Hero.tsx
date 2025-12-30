@@ -59,16 +59,25 @@ const Hero: React.FC = () => {
              {/* Decorative Background Blur */}
              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-primary-500/20 to-indigo-500/20 rounded-full blur-[80px] -z-10"></div>
 
-             {/* Single Notebook Image with Modern Frame */}
+             {/* Single Notebook Video Container with Modern Frame */}
              <div className="relative w-full max-w-[650px] transform hover:scale-[1.02] transition-transform duration-700 ease-out">
                 {/* Glassmorphism Border Container */}
                 <div className="p-3 md:p-4 bg-white/5 rounded-[2rem] border border-white/10 backdrop-blur-sm shadow-2xl shadow-primary-900/50">
                     <div className="relative aspect-video rounded-[1.5rem] overflow-hidden bg-slate-900 shadow-inner group">
-                        <img 
-                            src="https://uaipdv.com.br/img/home/restore-icloud-itunes-backup-home-banner1.jpg" 
-                            alt="Notebook BIXS" 
-                            className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
-                        />
+                        
+                        {/* Video Element */}
+                        <video
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          className="absolute inset-0 w-full h-full object-cover rounded-[1.5rem]"
+                          poster="https://uaipdv.com.br/img/home/restore-icloud-itunes-backup-home-banner1.jpg"
+                        >
+                          <source src="hero-video.mp4" type="video/mp4" />
+                          Seu navegador não suporta a tag de vídeo.
+                        </video>
+
                         {/* Overlay brilho sutil */}
                         <div className="absolute inset-0 bg-gradient-to-tr from-transparent to-white/10 pointer-events-none mix-blend-overlay"></div>
                     </div>

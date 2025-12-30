@@ -38,7 +38,7 @@ export const PRODUCTS: Product[] = [
     title: 'Papi Fast',
     description: 'Automação e controle para estabelecimentos com grande fluxo.',
     image: 'https://papifast.com.br/images/Design_sem_nome-removebg-preview.png',
-    link: 'https://printweb.vlks.com.br/Home/homeC3',
+    link: 'https://PapiFast.com.br',
     logoColor: 'bg-orange-50', // Cor de fundo personalizada
   },
   {
