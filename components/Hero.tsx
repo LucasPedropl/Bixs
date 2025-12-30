@@ -74,7 +74,7 @@ const Hero: React.FC = () => {
                           className="absolute inset-0 w-full h-full object-cover rounded-[1.5rem]"
                           poster="https://uaipdv.com.br/img/home/restore-icloud-itunes-backup-home-banner1.jpg"
                         >
-                          <source src="hero-video.mp4" type="video/mp4" />
+                          <source src="video-hero.mp4" type="video/mp4" />
                           Seu navegador não suporta a tag de vídeo.
                         </video>
 
