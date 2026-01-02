@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { WHATSAPP_LINK } from '../constants';
 
 const Hero: React.FC = () => {
+	const heroVideoSrc = 'hero-video.mp4';
 	return (
 		<section
 			id="home"
@@ -75,10 +76,9 @@ const Hero: React.FC = () => {
 										muted
 										playsInline
 										className="absolute inset-0 w-full h-full object-cover rounded-[1.5rem]"
-										poster="/img/home/restore-icloud-itunes-backup-home-banner1.jpg"
 									>
 										<source
-											src="/hero-video.mp4"
+											src={heroVideoSrc}
 											type="video/mp4"
 										/>
 										Seu navegador não suporta a tag de
