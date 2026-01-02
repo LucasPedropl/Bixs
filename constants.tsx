@@ -31,7 +31,7 @@ export const SPECIALTIES: Specialty[] = [
   },
 ];
 
-// Ordem alterada para exibir Papi Fast e UAI PDV primeiro. Print APP removido.
+// Ordem alterada para exibir Papi Fast e UAI PDV primeiro. Print APP readicionado.
 export const PRODUCTS: Product[] = [
   {
     id: 'papi-fast',
@@ -54,8 +54,16 @@ export const PRODUCTS: Product[] = [
     title: 'UAI PDV Mais',
     description: 'Versão avançada com ainda mais recursos para sua gestão.',
     image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvsMXM793lO9BJtCIZAsNPJ0jqZiLBT5HMfg&s',
-    link: 'https://uaipdv.com.br',
+    link: 'https://uaipdv.com.br/#solutions',
     logoColor: 'bg-cyan-50',
+  },
+  {
+    id: 'print-app',
+    title: 'Print App',
+    description: 'Imprima com facilidade Etiquetas, Comandas e Cartazes direto do Celular ou Tablet.',
+    image: 'https://uaipdv.com.br/printapp/images/ImagemdoWhatsAppde2025-06-10s19.46.23_e676c340.jpg?rand=bdb2',
+    link: 'https://uaipdv.com.br/printapp/',
+    logoColor: 'bg-purple-50',
   },
   {
     id: 'pagweb',
