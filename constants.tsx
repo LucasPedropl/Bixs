@@ -115,7 +115,7 @@ export const PRODUCTS: Product[] = [
 		title: 'Agente+',
 		description: 'Monitoramento e segurança avançada para seu sistema.',
 		// Usar arquivo local na pasta `public/images` para servir como logo
-		image: '/public/agente+.png',
+		image: '/agente.png',
 		icon: (
 			<div className="flex flex-col items-center">
 				<div className="relative">
