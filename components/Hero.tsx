@@ -7,7 +7,7 @@ const Hero: React.FC = () => {
 	return (
 		<section
 			id="home"
-			className="relative min-h-screen flex items-center overflow-hidden bg-primary-950 pt-24 md:pt-20 pb-12"
+			className="relative min-h-screen flex items-center overflow-hidden bg-primary-950 pt-20 sm:pt-24 md:pt-28 lg:pt-20 pb-12"
 		>
 			{/* Background Effects */}
 			<div className="absolute inset-0 z-0 pointer-events-none">
@@ -60,12 +60,13 @@ const Hero: React.FC = () => {
 					</div>
 
 					{/* Right Content / Visual Composition */}
-					<div className="hidden lg:flex flex-1 w-full justify-center items-center relative">
+					{/* Tornar visível em telas menores e ajustar max-width responsivo */}
+					<div className="flex flex-1 w-full justify-center items-center relative mt-8 lg:mt-0">
 						{/* Decorative Background Blur */}
 						<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-primary-500/20 to-indigo-500/20 rounded-full blur-[80px] -z-10"></div>
 
 						{/* Single Notebook Video Container with Modern Frame */}
-						<div className="relative w-full max-w-[650px] transform hover:scale-[1.02] transition-transform duration-700 ease-out">
+						<div className="relative w-full max-w-[420px] md:max-w-[520px] lg:max-w-[650px] mx-auto transform hover:scale-[1.02] transition-transform duration-700 ease-out">
 							{/* Glassmorphism Border Container */}
 							<div className="p-3 md:p-4 bg-white/5 rounded-[2rem] border border-white/10 backdrop-blur-sm shadow-2xl shadow-primary-900/50">
 								<div className="relative aspect-video rounded-[1.5rem] overflow-hidden bg-slate-900 shadow-inner group">
