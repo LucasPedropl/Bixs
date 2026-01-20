@@ -91,7 +91,8 @@ export const PRODUCTS: Product[] = [
 			</div>
 		),
 		logoColor: 'bg-emerald-50',
-		isComingSoon: true, // Sem link = Em breve
+		link: 'https://uaipdv.com.br/pagweb',
+		isComingSoon: false,
 	},
 	{
 		id: 'agenda-ai',
@@ -108,14 +109,14 @@ export const PRODUCTS: Product[] = [
 			</div>
 		),
 		logoColor: 'bg-blue-50',
-		isComingSoon: true, // Sem link = Em breve
+		link: 'https://uaipdv.com.br/agendaai',
 	},
 	{
 		id: 'agente-mais',
 		title: 'Agente+',
 		description: 'Monitoramento e segurança avançada para seu sistema.',
-		// Usar arquivo local na pasta `public/images` para servir como logo
-		image: '/agente.png',
+		// Usar arquivo local copiado para `dist` durante build. Caminho relativo (sem '/') funciona com `base: './'`.
+		image: 'agente.png',
 		icon: (
 			<div className="flex flex-col items-center">
 				<div className="relative">
@@ -128,6 +129,6 @@ export const PRODUCTS: Product[] = [
 			</div>
 		),
 		logoColor: 'bg-violet-50',
-		isComingSoon: true, // Sem link = Em breve
+		link: 'https://uaipdv.com.br/agentmais',
 	},
 ];
