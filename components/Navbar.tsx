@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ArrowRight, Home, Zap, Box, MessageCircle, ChevronRight } from 'lucide-react';
+import { Menu, X, Home, Zap, Box, MessageCircle, ChevronRight, FileText } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { WHATSAPP_LINK } from '../constants';
 
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const isHomePage = location.pathname === '/';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -14,7 +19,6 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Bloquear o scroll do corpo quando o menu mobile estiver aberto
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -23,13 +27,33 @@ const Navbar: React.FC = () => {
     }
   }, [isMobileMenuOpen]);
 
+  const handleNavigation = (href: string) => {
+    setIsMobileMenuOpen(false);
+    
+    if (href.startsWith('#')) {
+      if (!isHomePage) {
+        navigate('/');
+        setTimeout(() => {
+          const element = document.querySelector(href);
+          element?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else {
+        const element = document.querySelector(href);
+        element?.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+        navigate(href);
+    }
+  };
+
+  // Definição de links
   const navLinks = [
-    { name: 'Início', href: '#home' },
-    { name: 'Soluções', href: '#specialties' },
-    { name: 'Produtos', href: '#products' },
+    { name: 'Início', href: '#home', isHash: true },
+    { name: 'Soluções', href: '#specialties', isHash: true },
+    { name: 'Produtos', href: '#products', isHash: true },
+    { name: 'Contratos', href: '/contratos', isHash: false },
   ];
 
-  // Configuração estendida para o menu mobile (ícones e descrições)
   const mobileLinks = [
     { 
       name: 'Início', 
@@ -49,14 +73,20 @@ const Navbar: React.FC = () => {
       icon: Box, 
       desc: 'Explore nosso catálogo completo' 
     },
+    { 
+      name: 'Contratos', 
+      href: '/contratos', 
+      icon: FileText, 
+      desc: 'Gerar contrato de serviço' 
+    },
   ];
 
-  // Lógica de cores para a Navbar principal (Desktop/Estado Fechado)
-  const useDarkTheme = isScrolled;
+  // Lógica de cores: Se não estiver na home, sempre usar tema escuro (fundo branco)
+  // Se estiver na home, usar tema escuro apenas ao rolar
+  const useDarkTheme = !isHomePage || isScrolled;
 
   return (
     <>
-      {/* Barra de Navegação Principal */}
       <nav
         className={`fixed w-full z-50 transition-all duration-300 ${
           useDarkTheme
@@ -66,29 +96,29 @@ const Navbar: React.FC = () => {
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
-            {/* Logo Principal */}
-            <a href="#" className="flex items-center gap-2.5 group">
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2.5 group">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl shadow-lg transition-all duration-300 ${useDarkTheme ? 'bg-primary-600 text-white' : 'bg-white text-primary-600'}`}>
                 B
               </div>
               <span className={`text-2xl font-bold tracking-tight transition-colors duration-300 ${useDarkTheme ? 'text-slate-900' : 'text-white'}`}>
                 BIXS
               </span>
-            </a>
+            </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1">
-              <div className={`flex space-x-1 mr-6 px-4 py-2 rounded-full ${isScrolled ? 'bg-slate-100/50' : 'bg-white/10 backdrop-blur-sm border border-white/10'}`}>
+              <div className={`flex space-x-1 mr-6 px-4 py-2 rounded-full ${useDarkTheme ? 'bg-slate-100/50' : 'bg-white/10 backdrop-blur-sm border border-white/10'}`}>
                   {navLinks.map((link) => (
-                  <a
+                    <button
                       key={link.name}
-                      href={link.href}
+                      onClick={() => handleNavigation(link.href)}
                       className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-300 hover:bg-white hover:text-primary-600 ${
-                      isScrolled ? 'text-slate-600' : 'text-white'
+                        useDarkTheme ? 'text-slate-600' : 'text-white'
                       }`}
-                  >
+                    >
                       {link.name}
-                  </a>
+                    </button>
                   ))}
               </div>
               <a
@@ -96,7 +126,7 @@ const Navbar: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg ${
-                    isScrolled 
+                    useDarkTheme 
                     ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-primary-500/30' 
                     : 'bg-white text-primary-600 hover:bg-slate-50 shadow-white/20'
                 }`}
@@ -105,7 +135,7 @@ const Navbar: React.FC = () => {
               </a>
             </div>
 
-            {/* Mobile Menu Trigger Button */}
+            {/* Mobile Menu Trigger */}
             <div className="md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
@@ -121,9 +151,7 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* 
-        MENU MOBILE REDESENHADO 
-      */}
+      {/* Mobile Menu */}
       <div 
         className={`fixed inset-0 z-[60] bg-slate-50 flex flex-col transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           isMobileMenuOpen 
@@ -131,19 +159,15 @@ const Navbar: React.FC = () => {
             : 'opacity-0 translate-y-4 invisible pointer-events-none'
         }`}
       >
-        {/* Background Decorativo Mobile */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-primary-100/60 rounded-full blur-3xl -mr-20 -mt-20 opacity-70 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-100/60 rounded-full blur-3xl -ml-20 -mb-20 opacity-70 pointer-events-none"></div>
 
-        {/* Header do Menu Mobile */}
         <div className="flex justify-between items-center p-4 py-5 bg-white/50 backdrop-blur-sm border-b border-slate-200/60 relative z-10">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
               B
             </div>
-            <span className="text-2xl font-bold text-slate-900">
-              BIXS
-            </span>
+            <span className="text-2xl font-bold text-slate-900">BIXS</span>
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
@@ -154,16 +178,14 @@ const Navbar: React.FC = () => {
           </button>
         </div>
 
-        {/* Links do Menu Mobile - Estilo Cartão */}
         <div className="flex-1 px-4 py-8 overflow-y-auto relative z-10">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-6 pl-2">Navegação</p>
           <div className="space-y-4">
             {mobileLinks.map((link, index) => (
-              <a
+              <button
                 key={link.name}
-                href={link.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="group flex items-center p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-primary-100 active:scale-[0.98] transition-all duration-300"
+                onClick={() => handleNavigation(link.href)}
+                className="w-full text-left group flex items-center p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-primary-100 active:scale-[0.98] transition-all duration-300"
                 style={{ transitionDelay: `${index * 75}ms` }}
               >
                 <div className="w-12 h-12 rounded-xl bg-slate-50 text-slate-500 flex items-center justify-center group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors duration-300">
@@ -180,12 +202,11 @@ const Navbar: React.FC = () => {
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 group-hover:bg-primary-50 group-hover:text-primary-600 transition-all">
                    <ChevronRight size={20} />
                 </div>
-              </a>
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Footer do Menu Mobile (CTA) */}
         <div className="p-6 pb-8 bg-white border-t border-slate-100 relative z-10 rounded-t-3xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
           <a
             href={WHATSAPP_LINK}
@@ -196,9 +217,6 @@ const Navbar: React.FC = () => {
             <MessageCircle className="mr-2 group-hover:animate-bounce" size={20}/>
             Fale Conosco
           </a>
-          <p className="text-slate-400 text-xs text-center mt-4">
-            Segunda a Sexta, das 8h às 18h
-          </p>
         </div>
       </div>
     </>

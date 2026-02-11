@@ -1,7 +1,24 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleNavigation = (id: string) => {
+    if (location.pathname !== '/') {
+        navigate('/');
+        // Small timeout to allow route change before scrolling
+        setTimeout(() => {
+            const element = document.getElementById(id);
+            element?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    } else {
+        const element = document.getElementById(id);
+        element?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <footer className="bg-white text-slate-500 py-16 border-t border-slate-100">
@@ -14,9 +31,9 @@ const Footer: React.FC = () => {
               <span className="text-2xl font-bold text-slate-900">BIXS</span>
           </div>
           <div className="flex gap-8 text-sm font-medium">
-             <a href="#home" className="hover:text-primary-600 transition-colors">Início</a>
-             <a href="#specialties" className="hover:text-primary-600 transition-colors">Soluções</a>
-             <a href="#products" className="hover:text-primary-600 transition-colors">Produtos</a>
+             <button onClick={() => handleNavigation('home')} className="hover:text-primary-600 transition-colors">Início</button>
+             <button onClick={() => handleNavigation('specialties')} className="hover:text-primary-600 transition-colors">Soluções</button>
+             <button onClick={() => handleNavigation('products')} className="hover:text-primary-600 transition-colors">Produtos</button>
           </div>
         </div>
         

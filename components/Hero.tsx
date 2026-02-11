@@ -4,6 +4,14 @@ import { WHATSAPP_LINK } from '../constants';
 
 const Hero: React.FC = () => {
 	const heroVideoSrc = 'hero-video.mp4';
+
+    const scrollToProducts = () => {
+        const element = document.getElementById('products');
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
 	return (
 		<section
 			id="home"
@@ -50,12 +58,12 @@ const Hero: React.FC = () => {
 								Saiba Mais
 								<ArrowRight className="ml-2 w-5 h-5" />
 							</a>
-							<a
-								href="#products"
-								className="inline-flex items-center justify-center px-8 py-3.5 md:py-4 rounded-xl bg-white/10 text-white font-semibold text-base md:text-lg border border-white/10 backdrop-blur-sm hover:bg-white/20 transition-all"
+							<button
+								onClick={scrollToProducts}
+								className="inline-flex items-center justify-center px-8 py-3.5 md:py-4 rounded-xl bg-white/10 text-white font-semibold text-base md:text-lg border border-white/10 backdrop-blur-sm hover:bg-white/20 transition-all cursor-pointer"
 							>
 								Nossos Produtos
-							</a>
+							</button>
 						</div>
 					</div>
 
