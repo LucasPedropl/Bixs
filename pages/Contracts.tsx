@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import { pdf } from '@react-pdf/renderer';
 import ContractDocument from '../components/ContractDocument';
-import { FileDown, CheckCircle, AlertCircle, FileText } from 'lucide-react';
+import { FileDown, CheckCircle, AlertCircle, FileText, Loader2 } from 'lucide-react';
 
 interface FormData {
   contratante: string;
@@ -24,7 +24,8 @@ const Contracts: React.FC = () => {
     cpfResponsavel: '',
   });
 
-  const [isReady, setIsReady] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   // Funções auxiliares de máscara
   const formatCpfCnpj = (value: string) => {
@@ -90,12 +91,28 @@ const Contracts: React.FC = () => {
     }
 
     setFormData((prev) => ({ ...prev, [name]: formattedValue }));
-    setIsReady(false); 
+    // Se o usuário mudar algo, invalida o PDF anterior para forçar nova geração
+    if (pdfUrl) {
+        URL.revokeObjectURL(pdfUrl);
+        setPdfUrl(null);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsReady(true);
+    setIsGenerating(true);
+    
+    try {
+        // Gera o blob do PDF manualmente
+        const blob = await pdf(<ContractDocument data={formData} />).toBlob();
+        const url = URL.createObjectURL(blob);
+        setPdfUrl(url);
+    } catch (error) {
+        console.error("Erro ao gerar PDF:", error);
+        alert("Ocorreu um erro ao gerar o PDF. Tente novamente.");
+    } finally {
+        setIsGenerating(false);
+    }
   };
 
   const inputClasses = "w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none text-slate-700 placeholder:text-slate-400";
@@ -231,23 +248,49 @@ const Contracts: React.FC = () => {
 
                 {/* Ações */}
                 <div className="pt-6 border-t border-slate-50 flex flex-col md:flex-row items-center gap-4">
-                  <button
-                    type="submit"
-                    className="w-full md:w-auto px-8 py-4 rounded-xl bg-primary-600 text-white font-bold text-lg hover:bg-primary-700 active:scale-95 transition-all shadow-lg shadow-primary-500/25 flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle size={20} />
-                    Gerar PDF
-                  </button>
-
-                  {isReady && (
-                    <PDFDownloadLink
-                      document={<ContractDocument data={formData} />}
-                      fileName={`Contrato_BIXS_${formData.contratante.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`}
-                      className="w-full md:w-auto px-8 py-4 rounded-xl bg-green-600 text-white font-bold text-lg hover:bg-green-700 active:scale-95 transition-all shadow-lg shadow-green-500/25 flex items-center justify-center gap-2 animate-in fade-in slide-in-from-left-4"
-                    >
-                      <FileDown size={20} />
-                      Baixar Contrato
-                    </PDFDownloadLink>
+                  {!pdfUrl ? (
+                      <button
+                        type="submit"
+                        disabled={isGenerating}
+                        className={`w-full md:w-auto px-8 py-4 rounded-xl text-white font-bold text-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
+                            isGenerating 
+                            ? 'bg-slate-400 cursor-not-allowed' 
+                            : 'bg-primary-600 hover:bg-primary-700 active:scale-95 shadow-primary-500/25'
+                        }`}
+                      >
+                        {isGenerating ? (
+                            <>
+                                <Loader2 size={20} className="animate-spin" />
+                                Gerando PDF...
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle size={20} />
+                                Gerar Contrato
+                            </>
+                        )}
+                      </button>
+                  ) : (
+                     <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                        <a
+                            href={pdfUrl}
+                            download={`Contrato_BIXS_${formData.contratante.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`}
+                            className="w-full md:w-auto px-8 py-4 rounded-xl bg-green-600 text-white font-bold text-lg hover:bg-green-700 active:scale-95 transition-all shadow-lg shadow-green-500/25 flex items-center justify-center gap-2 animate-in fade-in slide-in-from-left-4"
+                        >
+                            <FileDown size={20} />
+                            Baixar Contrato
+                        </a>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                URL.revokeObjectURL(pdfUrl);
+                                setPdfUrl(null);
+                            }}
+                            className="px-6 py-4 rounded-xl bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition-colors"
+                        >
+                            Gerar Novo
+                        </button>
+                     </div>
                   )}
                 </div>
               </form>
@@ -259,7 +302,7 @@ const Contracts: React.FC = () => {
                     <div>
                         <h4 className="font-bold text-slate-900 mb-1">Informações Importantes</h4>
                         <p className="text-sm text-slate-500 leading-relaxed">
-                            Ao clicar em "Gerar PDF", um arquivo contendo o contrato padrão da BIXS Soluções será criado com os dados inseridos acima. Certifique-se de que todas as informações estejam corretas antes de imprimir e assinar.
+                            Ao clicar em "Gerar Contrato", um arquivo PDF será gerado com os dados inseridos. Certifique-se de que todas as informações estejam corretas.
                         </p>
                     </div>
                 </div>
