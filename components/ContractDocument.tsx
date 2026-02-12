@@ -1,27 +1,38 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, Image, Font } from '@react-pdf/renderer';
-
-// Registro de fontes (opcional, usando Helvetica padrão para simplificar, mas idealmente usaria fontes customizadas)
-// Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.ttf' });
+import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
 
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
+    paddingTop: 85, // Espaço para o cabeçalho fixo
+    paddingBottom: 60,
+    paddingHorizontal: 40,
     fontSize: 10,
     fontFamily: 'Helvetica',
     lineHeight: 1.5,
     color: '#000',
   },
-  headerContainer: {
+  header: {
+    position: 'absolute',
+    top: 20,
+    left: 40,
+    right: 40,
+    height: 60,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    paddingBottom: 10,
     flexDirection: 'row',
-    marginBottom: 20,
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  logo: {
-    width: 60,
-    height: 60,
+  headerLogo: {
+    width: 100,
+    height: 40,
     objectFit: 'contain',
-    marginRight: 10
+  },
+  headerText: {
+    fontSize: 8,
+    color: '#666',
+    textAlign: 'right',
   },
   title: {
     fontSize: 12,
@@ -29,6 +40,7 @@ const styles = StyleSheet.create({
     textDecoration: 'underline',
     textAlign: 'center',
     marginBottom: 20,
+    marginTop: 10,
     width: '100%',
   },
   section: {
@@ -38,9 +50,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     fontWeight: 'bold',
   },
-  yellowHighlight: {
-    backgroundColor: '#FFFF00',
-  },
   fieldRow: {
     flexDirection: 'row',
     marginBottom: 5,
@@ -48,11 +57,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: 'Helvetica-Bold',
-    color: '#FFD700', // Tentando simular o amarelo do PDF original no texto das labels
+    color: '#000', // Preto oficial, sem destaques coloridos
     marginRight: 4,
   },
   value: {
     fontFamily: 'Helvetica',
+    textDecoration: 'underline',
   },
   paragraph: {
     marginBottom: 10,
@@ -64,18 +74,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 5,
   },
-  list: {
-    marginLeft: 15,
-  },
-  listItem: {
-    flexDirection: 'row',
-    marginBottom: 2,
-  },
-  bullet: {
-    width: 10,
-  },
   signatureSection: {
-    marginTop: 50,
+    marginTop: 40,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
@@ -87,6 +87,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     textAlign: 'center',
   },
+  footer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 40,
+    right: 40,
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingTop: 10,
+  }
 });
 
 interface ContractData {
@@ -108,37 +120,44 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
     <Document>
       <Page size="A4" style={styles.page}>
         
-        {/* Header Visual Fake - Logo Placeholder */}
-        <View style={{ marginBottom: 20 }}>
-             <Text style={{ fontSize: 16, fontFamily: 'Helvetica-Bold', color: '#3730a3' }}>Uai PDV / BIXS</Text>
+        {/* Cabeçalho Fixo (prop 'fixed') garante repetição em todas as páginas */}
+        <View style={styles.header} fixed>
+             <Image 
+                style={styles.headerLogo} 
+                src="https://uaipdv.com.br/images/Logo7-removebg-preview.png" 
+             />
+             <View>
+                 <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 10, color: '#3730a3' }}>BIX SOLUÇÕES / UAI PDV</Text>
+                 <Text style={styles.headerText}>Automação Inteligente</Text>
+             </View>
         </View>
 
         <Text style={styles.title}>CONTRATO DE IMPLANTAÇÃO DE SOFTWARE</Text>
 
         <View style={styles.section}>
           <View style={styles.fieldRow}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', color: '#FACC15', marginRight: 4 }}>CONTRATANTE:</Text>
-            <Text>{data.contratante}</Text>
+            <Text style={styles.label}>CONTRATANTE:</Text>
+            <Text style={styles.value}>{data.contratante}</Text>
           </View>
           <View style={styles.fieldRow}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', color: '#FACC15', marginRight: 4 }}>CPF/CNPJ:</Text>
-            <Text>{data.cpfCnpj}</Text>
+            <Text style={styles.label}>CPF/CNPJ:</Text>
+            <Text style={styles.value}>{data.cpfCnpj}</Text>
           </View>
           <View style={styles.fieldRow}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', color: '#FACC15', marginRight: 4 }}>ENDEREÇO:</Text>
-            <Text>{data.endereco}</Text>
+            <Text style={styles.label}>ENDEREÇO:</Text>
+            <Text style={styles.value}>{data.endereco}</Text>
           </View>
           <View style={styles.fieldRow}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', color: '#FACC15', marginRight: 4 }}>CONTATO:</Text>
-            <Text style={{ marginRight: 20 }}>{data.contato}</Text>
-            <Text style={{ fontFamily: 'Helvetica-Bold', color: '#FACC15', marginRight: 4 }}>E-MAIL:</Text>
-            <Text>{data.email}</Text>
+            <Text style={styles.label}>CONTATO:</Text>
+            <Text style={[styles.value, { marginRight: 20 }]}>{data.contato}</Text>
+            <Text style={styles.label}>E-MAIL:</Text>
+            <Text style={styles.value}>{data.email}</Text>
           </View>
           <View style={styles.fieldRow}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', color: '#FACC15', marginRight: 4 }}>RESPONSÁVEL:</Text>
-            <Text style={{ marginRight: 20 }}>{data.responsavel}</Text>
-            <Text style={{ fontFamily: 'Helvetica-Bold', color: '#FACC15', marginRight: 4 }}>CPF:</Text>
-            <Text>{data.cpfResponsavel}</Text>
+            <Text style={styles.label}>RESPONSÁVEL:</Text>
+            <Text style={[styles.value, { marginRight: 20 }]}>{data.responsavel}</Text>
+            <Text style={styles.label}>CPF:</Text>
+            <Text style={styles.value}>{data.cpfResponsavel}</Text>
           </View>
         </View>
 
@@ -221,7 +240,7 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
             </Text>
         </View>
 
-        <View style={styles.signatureSection}>
+        <View style={styles.signatureSection} wrap={false}>
             <View style={styles.signatureBlock}>
                 <Text style={styles.bold}>CONTRATADO</Text>
                 <Text>BIX SOLUÇÕES</Text>
@@ -231,6 +250,10 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
                 <Text>{data.contratante || 'Cliente'}</Text>
             </View>
         </View>
+
+        <Text style={styles.footer} fixed render={({ pageNumber, totalPages }) => (
+            `${pageNumber} / ${totalPages}`
+        )} />
       </Page>
     </Document>
   );

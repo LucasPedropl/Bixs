@@ -26,10 +26,71 @@ const Contracts: React.FC = () => {
 
   const [isReady, setIsReady] = useState(false);
 
+  // Funções auxiliares de máscara
+  const formatCpfCnpj = (value: string) => {
+    const cleanValue = value.replace(/\D/g, '');
+    
+    if (cleanValue.length <= 11) {
+      // CPF: 000.000.000-00
+      return cleanValue
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+        .replace(/(-\d{2})\d+?$/, '$1');
+    } else {
+      // CNPJ: 00.000.000/0000-00
+      return cleanValue
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1/$2')
+        .replace(/(\d{4})(\d)/, '$1-$2')
+        .replace(/(-\d{2})\d+?$/, '$1');
+    }
+  };
+
+  const formatPhone = (value: string) => {
+    const cleanValue = value.replace(/\D/g, '');
+    // Remove formatação anterior para recalcular
+    if (cleanValue.length <= 10) {
+      // Fixo: (XX) XXXX-XXXX
+      return cleanValue
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{4})(\d)/, '$1-$2')
+        .replace(/(-\d{4})\d+?$/, '$1');
+    } else {
+      // Celular: (XX) XXXXX-XXXX
+      return cleanValue
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{5})(\d)/, '$1-$2')
+        .replace(/(-\d{4})\d+?$/, '$1');
+    }
+  };
+
+  const formatCpf = (value: string) => {
+    const cleanValue = value.replace(/\D/g, '');
+    // CPF: 000.000.000-00
+    return cleanValue
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+      .replace(/(-\d{2})\d+?$/, '$1');
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setIsReady(false); // Reset ready state on change to force user to review? Optional.
+    let formattedValue = value;
+
+    // Aplicar máscaras baseadas no nome do campo
+    if (name === 'cpfCnpj') {
+        formattedValue = formatCpfCnpj(value);
+    } else if (name === 'contato') {
+        formattedValue = formatPhone(value);
+    } else if (name === 'cpfResponsavel') {
+        formattedValue = formatCpf(value);
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: formattedValue }));
+    setIsReady(false); 
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -76,7 +137,7 @@ const Contracts: React.FC = () => {
                             value={formData.contratante}
                             onChange={handleChange}
                             className={inputClasses}
-                            placeholder="Ex: Lusa Log & Distribuição LTDA"
+                            placeholder="Razão Social ou Nome Completo"
                             required
                             />
                         </div>
@@ -89,6 +150,7 @@ const Contracts: React.FC = () => {
                             onChange={handleChange}
                             className={inputClasses}
                             placeholder="00.000.000/0001-00"
+                            maxLength={18}
                             required
                             />
                         </div>
@@ -113,6 +175,7 @@ const Contracts: React.FC = () => {
                             onChange={handleChange}
                             className={inputClasses}
                             placeholder="(00) 0 0000-0000"
+                            maxLength={15}
                             required
                             />
                         </div>
@@ -159,6 +222,7 @@ const Contracts: React.FC = () => {
                             onChange={handleChange}
                             className={inputClasses}
                             placeholder="000.000.000-00"
+                            maxLength={14}
                             required
                             />
                         </div>
@@ -178,7 +242,7 @@ const Contracts: React.FC = () => {
                   {isReady && (
                     <PDFDownloadLink
                       document={<ContractDocument data={formData} />}
-                      fileName={`Contrato_BIXS_${formData.contratante.replace(/\s+/g, '_')}.pdf`}
+                      fileName={`Contrato_BIXS_${formData.contratante.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`}
                       className="w-full md:w-auto px-8 py-4 rounded-xl bg-green-600 text-white font-bold text-lg hover:bg-green-700 active:scale-95 transition-all shadow-lg shadow-green-500/25 flex items-center justify-center gap-2 animate-in fade-in slide-in-from-left-4"
                     >
                       <FileDown size={20} />
