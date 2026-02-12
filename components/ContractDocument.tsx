@@ -124,12 +124,12 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
         <View style={styles.header} fixed>
              <Image 
                 style={styles.headerLogo} 
+                src="/logo-bix-automacao.png" 
+             />
+             <Image 
+                style={styles.headerLogo} 
                 src="https://uaipdv.com.br/images/Logo7-removebg-preview.png" 
              />
-             <View>
-                 <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 10, color: '#3730a3' }}>BIX SOLUÇÕES / UAI PDV</Text>
-                 <Text style={styles.headerText}>Automação Inteligente</Text>
-             </View>
         </View>
 
         <Text style={styles.title}>CONTRATO DE IMPLANTAÇÃO DE SOFTWARE</Text>
