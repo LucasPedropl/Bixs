@@ -116,6 +116,12 @@ interface ContractData {
 	email: string;
 	responsavel: string;
 	cpfResponsavel: string;
+	segmento: string;
+	// Campos opcionais dependendo do segmento
+	dataInicio?: string;
+	dataFim?: string;
+	qtdeMaquinas?: string;
+	qtdeLicencas?: string;
 }
 
 interface ContractDocumentProps {
@@ -123,6 +129,8 @@ interface ContractDocumentProps {
 }
 
 const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
+	const isEvent = data.segmento === 'Evento';
+
 	return (
 		<Document>
 			<Page size="A4" style={styles.page}>
@@ -270,7 +278,12 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 							• Ativação e Configuração do Sistema Gerencial: R$
 							150,00;
 						</Text>
-						<Text>• Número de licença ativa: 5 PDV: R$ 229,90</Text>
+						{!isEvent && data.qtdeLicencas && (
+							<Text>
+								• Número de licença ativa: ({data.qtdeLicencas})
+								PDV
+							</Text>
+						)}
 						<Text
 							style={{
 								marginTop: 5,
