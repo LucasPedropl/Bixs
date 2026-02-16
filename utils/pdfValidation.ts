@@ -1,75 +1,94 @@
-import { PDFDocument, PDFName, PDFDict, PDFArray } from 'pdf-lib';
+import { PDFDocument, PDFName, PDFDict, PDFArray, PDFRef } from 'pdf-lib';
 
 /**
  * Verifica se um arquivo PDF possui campos de assinatura digital preenchidos.
- * Esta verificação é estrutural: detecta se existem campos do tipo 'Sig' (Signature)
- * com conteúdo preenchido (dicionário de assinatura com ByteRange e Contents).
- *
- * NÃO valida a cadeia de certificação (ICP-Brasil), revogação ou integridade criptográfica completa,
- * mas impede o envio de documentos não assinados ou corrompidos.
+ * Esta versão utiliza busca recursiva e helpers para lidar com referências indiretas (PDFRef),
+ * comuns em PDFs complexos como os do assinador .GOV.BR.
  */
 export const checkForDigitalSignature = async (
 	file: File,
 ): Promise<boolean> => {
 	try {
-		// 1. Converter o File para ArrayBuffer
 		const arrayBuffer = await file.arrayBuffer();
-
-		// 2. Carregar o documento ignorando encriptação se possível (apenas leitura)
+		// Carrega ignorando criptografia para leitura
 		const pdfDoc = await PDFDocument.load(arrayBuffer, {
 			ignoreEncryption: true,
 		});
 
-		// 3. Acessar o formulário do PDF (AcroForm)
-		const form = pdfDoc.catalog.get(PDFName.of('AcroForm'));
+		// Função auxiliar para resolver referências (PDFRef -> PDFObject)
+		// O método 'lookup' do contexto do documento faz isso automaticamente,
+		// mas precisamos garantir que estamos trabalhando com o dicionário correto.
+		const lookup = (ref: any) => pdfDoc.context.lookup(ref);
 
-		if (!form || !(form instanceof PDFDict)) {
+		// 1. Acessa o Catálogo
+		const catalog = pdfDoc.catalog;
+
+		// 2. Acessa o AcroForm (pode ser uma referência)
+		const acroFormRef = catalog.get(PDFName.of('AcroForm'));
+		const acroForm = lookup(acroFormRef);
+
+		if (!acroForm || !(acroForm instanceof PDFDict)) {
 			console.log('PDF não possui formulários (AcroForm).');
 			return false;
 		}
 
-		// 4. Acessar os campos do formulário
-		const fields = form.get(PDFName.of('Fields'));
+		// 3. Acessa os campos (Fields) do formulário
+		const fieldsRef = acroForm.get(PDFName.of('Fields'));
+		const fields = lookup(fieldsRef);
 
 		if (!fields || !(fields instanceof PDFArray)) {
-			console.log('PDF não possui campos de formulário.');
+			console.log('PDF não possui campos de formulário (Fields).');
 			return false;
 		}
 
-		// 5. Iterar sobre os campos procurando por assinaturas
-		// O PDF armazena assinaturas como campos de formulário do tipo 'Sig'
-		let hasSignature = false;
+		// 4. Função recursiva para buscar assinaturas
+		// Necessária pois campos podem estar aninhados em 'Kids' ou em árvores de widgets
+		const findSignatureInFields = (fieldArray: PDFArray): boolean => {
+			for (let i = 0; i < fieldArray.size(); i++) {
+				const fieldRef = fieldArray.get(i);
+				const field = lookup(fieldRef);
 
-		// Percorre os campos de formulário (array de referências)
-		for (let i = 0; i < fields.size(); i++) {
-			const fieldRef = fields.get(i);
-			const field = pdfDoc.context.lookup(fieldRef);
+				if (field instanceof PDFDict) {
+					// Verifica o tipo do campo
+					const type = lookup(field.get(PDFName.of('FT'))); // Field Type
 
-			if (field instanceof PDFDict) {
-				const type = field.get(PDFName.of('FT')); // Field Type
-				const value = field.get(PDFName.of('V')); // Value (dicionário da assinatura)
+					// Se for campo de assinatura ('Sig')
+					if (type === PDFName.of('Sig')) {
+						// Verifica o valor ('V') que contém o dicionário da assinatura
+						const valueRef = field.get(PDFName.of('V'));
+						const value = lookup(valueRef);
 
-				// Verifica se é do tipo Sig (Signature)
-				if (type === PDFName.of('Sig')) {
-					// Se tem um valor (V), significa que está assinado
-					if (value instanceof PDFDict) {
-						const contents = value.get(PDFName.of('Contents'));
-						const byteRange = value.get(PDFName.of('ByteRange'));
+						if (value instanceof PDFDict) {
+							const contents = value.get(PDFName.of('Contents')); // Assinatura binária (PKCS#7)
+							const byteRange = value.get(
+								PDFName.of('ByteRange'),
+							); // Intervalo de bytes assinados
 
-						// Validação extra: verificar se o dicionário da assinatura tem conteúdo
-						if (contents && byteRange) {
-							hasSignature = true;
-							break; // Encontrou assinatura válida, pode parar
+							// Se tiver assinatura binária e intervalo, consideramos assinado
+							if (contents && byteRange) {
+								return true;
+							}
+						}
+					}
+
+					// Se não for assinatura ou se não estiver assinado, verifica se tem filhos (Kids)
+					// Campos de formulário podem ser hierárquicos
+					const kidsRef = field.get(PDFName.of('Kids'));
+					const kids = lookup(kidsRef);
+
+					if (kids instanceof PDFArray) {
+						if (findSignatureInFields(kids)) {
+							return true;
 						}
 					}
 				}
 			}
-		}
+			return false;
+		};
 
-		return hasSignature;
+		return findSignatureInFields(fields);
 	} catch (error) {
 		console.error('Erro ao validar assinatura do PDF:', error);
-		// Em caso de erro na leitura, assume inválido para segurança
 		return false;
 	}
 };

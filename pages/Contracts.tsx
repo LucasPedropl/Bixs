@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { pdf } from '@react-pdf/renderer';
 import ContractDocument from '../components/ContractDocument';
-import { checkForDigitalSignature } from '../utils/pdfValidation';
 import {
 	FileDown,
 	CheckCircle,
@@ -120,37 +119,14 @@ const Contracts: React.FC = () => {
 		}
 	};
 
-	const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files[0]) {
 			const file = e.target.files[0];
 			if (file.type !== 'application/pdf') {
 				alert('Por favor, envie apenas arquivos PDF.');
-				e.target.value = ''; // Limpa o input
-				setSignedFile(null);
 				return;
 			}
-
-			try {
-				// Validação básica de existência de assinatura digital
-				const hasSignature = await checkForDigitalSignature(file);
-
-				if (!hasSignature) {
-					alert(
-						'Não foi detectada uma assinatura digital neste PDF. Por favor, utilize o assinador do Gov.br antes de anexar o arquivo.',
-					);
-					e.target.value = ''; // Limpa o input
-					setSignedFile(null);
-					return;
-				}
-
-				setSignedFile(file);
-			} catch (error) {
-				console.error('Erro ao validar PDF:', error);
-				alert(
-					'Ocorreu um erro ao verificar o arquivo. Tente novamente.',
-				);
-				setSignedFile(null);
-			}
+			setSignedFile(file);
 		}
 	};
 
