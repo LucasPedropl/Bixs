@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 public/hero-video.mp4
+
+# WhatsApp Session (API)
+api/sessions/
+api/.env
+api/node_modules/

@@ -16,7 +16,14 @@ import {
 	Search,
 } from 'lucide-react';
 
-const SEGMENTOS = ['Evento', 'Bar', 'Restaurante', 'Loja', 'Hortifruti', 'Conveniência'];
+const SEGMENTOS = [
+	'Evento',
+	'Bar',
+	'Restaurante',
+	'Loja',
+	'Hortifruti',
+	'Conveniência',
+];
 const MAQUINAS = Array.from({ length: 31 }, (_, i) => i.toString());
 const LICENCAS = Array.from({ length: 21 }, (_, i) => (i + 1).toString());
 
@@ -58,17 +65,23 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
 	// Fechar ao clicar fora
 	React.useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+			if (
+				containerRef.current &&
+				!containerRef.current.contains(event.target as Node)
+			) {
 				setIsOpen(false);
 			}
 		};
 		document.addEventListener('mousedown', handleClickOutside);
-		return () => document.removeEventListener('mousedown', handleClickOutside);
+		return () =>
+			document.removeEventListener('mousedown', handleClickOutside);
 	}, []);
 
 	return (
 		<div className="relative space-y-2" ref={containerRef}>
-			<label className="block text-sm font-semibold text-slate-700">{label}</label>
+			<label className="block text-sm font-semibold text-slate-700">
+				{label}
+			</label>
 			<div className="relative">
 				<input
 					type="text"
@@ -107,7 +120,11 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
 				</div>
 			)}
 
-			{error && <p className="text-xs font-medium text-red-500 mt-1 animate-in fade-in slide-in-from-top-1">{error}</p>}
+			{error && (
+				<p className="text-xs font-medium text-red-500 mt-1 animate-in fade-in slide-in-from-top-1">
+					{error}
+				</p>
+			)}
 		</div>
 	);
 };
@@ -145,10 +162,14 @@ const Contracts: React.FC = () => {
 
 	// Novos estados para anexos e assinatura
 	const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
-	const [attachedDocument, setAttachedDocument] = useState<string | null>(null);
+	const [attachedDocument, setAttachedDocument] = useState<string | null>(
+		null,
+	);
 	const [isCameraOpen, setIsCameraOpen] = useState(false);
 	const [cameraError, setCameraError] = useState<string | null>(null);
-	const [docCaptureMode, setDocCaptureMode] = useState<'upload' | 'camera'>('upload');
+	const [docCaptureMode, setDocCaptureMode] = useState<'upload' | 'camera'>(
+		'upload',
+	);
 	const [errors, setErrors] = useState<Record<string, string>>({});
 
 	const videoRef = useRef<HTMLVideoElement>(null);
@@ -229,7 +250,10 @@ const Contracts: React.FC = () => {
 		// Validação em tempo real para campos específicos
 		if (name === 'segmento') {
 			if (value && !SEGMENTOS.includes(value)) {
-				setErrors((prev) => ({ ...prev, segmento: 'Por favor, selecione uma opção válida da lista.' }));
+				setErrors((prev) => ({
+					...prev,
+					segmento: 'Por favor, selecione uma opção válida da lista.',
+				}));
 			} else {
 				setErrors((prev) => {
 					const newErrors = { ...prev };
@@ -241,7 +265,11 @@ const Contracts: React.FC = () => {
 
 		if (name === 'qtdeMaquinas') {
 			if (value && !MAQUINAS.includes(value)) {
-				setErrors((prev) => ({ ...prev, qtdeMaquinas: 'Por favor, selecione uma quantidade válida (0-30).' }));
+				setErrors((prev) => ({
+					...prev,
+					qtdeMaquinas:
+						'Por favor, selecione uma quantidade válida (0-30).',
+				}));
 			} else {
 				setErrors((prev) => {
 					const newErrors = { ...prev };
@@ -253,7 +281,11 @@ const Contracts: React.FC = () => {
 
 		if (name === 'qtdeLicencas') {
 			if (value && !LICENCAS.includes(value)) {
-				setErrors((prev) => ({ ...prev, qtdeLicencas: 'Por favor, selecione uma quantidade válida (1-20).' }));
+				setErrors((prev) => ({
+					...prev,
+					qtdeLicencas:
+						'Por favor, selecione uma quantidade válida (1-20).',
+				}));
 			} else {
 				setErrors((prev) => {
 					const newErrors = { ...prev };
@@ -276,20 +308,26 @@ const Contracts: React.FC = () => {
 		setCameraError(null);
 		try {
 			const stream = await navigator.mediaDevices.getUserMedia({
-				video: { facingMode: target === 'doc' ? 'environment' : 'user' },
+				video: {
+					facingMode: target === 'doc' ? 'environment' : 'user',
+				},
 			});
 			if (videoRef.current) {
 				videoRef.current.srcObject = stream;
 			}
 		} catch (err) {
 			console.error('Erro ao acessar câmera:', err);
-			setCameraError('Não foi possível acessar a câmera. Verifique as permissões.');
+			setCameraError(
+				'Não foi possível acessar a câmera. Verifique as permissões.',
+			);
 		}
 	};
 
 	const stopCamera = () => {
 		if (videoRef.current && videoRef.current.srcObject) {
-			const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+			const tracks = (
+				videoRef.current.srcObject as MediaStream
+			).getTracks();
 			tracks.forEach((track) => track.stop());
 			videoRef.current.srcObject = null;
 		}
@@ -333,19 +371,24 @@ const Contracts: React.FC = () => {
 
 		// Verificar se há erros de validação
 		if (Object.keys(errors).length > 0) {
-			alert('Por favor, corrija os erros no formulário antes de prosseguir.');
+			alert(
+				'Por favor, corrija os erros no formulário antes de prosseguir.',
+			);
 			return;
 		}
 
 		if (!sigCanvasRef.current || sigCanvasRef.current.isEmpty()) {
-			alert('Por favor, desenhe sua assinatura antes de gerar o contrato.');
+			alert(
+				'Por favor, desenhe sua assinatura antes de gerar o contrato.',
+			);
 			return;
 		}
 
 		setIsGenerating(true);
 
 		try {
-			const signatureDataUrl = sigCanvasRef.current.toDataURL('image/png');
+			const signatureDataUrl =
+				sigCanvasRef.current.toDataURL('image/png');
 
 			// Gera o blob do PDF manualmente com todos os dados
 			const blob = await pdf(
@@ -360,6 +403,42 @@ const Contracts: React.FC = () => {
 			).toBlob();
 			const url = URL.createObjectURL(blob);
 			setPdfUrl(url);
+
+			// Enviar para a API externa
+			const formDataToSend = new FormData();
+			formDataToSend.append('clientName', formData.contratante);
+			formDataToSend.append('email', formData.email);
+			formDataToSend.append(
+				'pdf',
+				blob,
+				`Contrato_${formData.contratante.replace(/\s+/g, '_')}.pdf`,
+			);
+
+			try {
+				const response = await fetch(
+					'http://localhost:3001/api/send-contract',
+					{
+						method: 'POST',
+						body: formDataToSend,
+					},
+				);
+
+				if (!response.ok) {
+					console.error('Erro ao enviar contrato para API');
+					alert(
+						'O PDF foi gerado com sucesso, mas houve uma falha ao enviá-lo por e-mail/WhatsApp. Salve-o manualmente.',
+					);
+				} else {
+					const result = await response.json();
+					console.log('API Response:', result);
+				}
+			} catch (apiError) {
+				console.error('Erro de conexão com a API:', apiError);
+				alert(
+					'O PDF foi gerado, mas o servidor de envio (API) não foi encontrado.',
+				);
+			}
+
 			setIsSubmitted(true);
 		} catch (error) {
 			console.error('Erro ao gerar PDF:', error);
@@ -385,13 +464,17 @@ const Contracts: React.FC = () => {
 							Geração de Contrato
 						</h1>
 						<p className="text-slate-500 text-lg max-w-2xl mx-auto">
-							Preencha os dados, anexe seus documentos e assine para gerar seu contrato completo.
+							Preencha os dados, anexe seus documentos e assine
+							para gerar seu contrato completo.
 						</p>
 					</div>
 
 					<div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
 						<div className="p-8 md:p-10">
-							<form onSubmit={handleSubmit} className="space-y-10">
+							<form
+								onSubmit={handleSubmit}
+								className="space-y-10"
+							>
 								{/* Seção Empresa */}
 								<div>
 									<h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-2 mb-6 flex items-center gap-2">
@@ -541,12 +624,19 @@ const Contracts: React.FC = () => {
 													<SearchableSelect
 														label="Quantidade de Máquinas"
 														name="qtdeMaquinas"
-														value={formData.qtdeMaquinas || ''}
+														value={
+															formData.qtdeMaquinas ||
+															''
+														}
 														options={MAQUINAS}
 														placeholder="Selecione ou digite a quantidade"
-														onChange={handleValueChange}
+														onChange={
+															handleValueChange
+														}
 														required
-														error={errors.qtdeMaquinas}
+														error={
+															errors.qtdeMaquinas
+														}
 													/>
 												</div>
 											</>
@@ -558,12 +648,19 @@ const Contracts: React.FC = () => {
 													<SearchableSelect
 														label="Quantidade de Licenças"
 														name="qtdeLicencas"
-														value={formData.qtdeLicencas || ''}
+														value={
+															formData.qtdeLicencas ||
+															''
+														}
 														options={LICENCAS}
 														placeholder="Selecione ou digite a quantidade"
-														onChange={handleValueChange}
+														onChange={
+															handleValueChange
+														}
 														required
-														error={errors.qtdeLicencas}
+														error={
+															errors.qtdeLicencas
+														}
 													/>
 												</div>
 											)}
@@ -623,72 +720,128 @@ const Contracts: React.FC = () => {
 										{/* Anexar Documento */}
 										<div className="space-y-0">
 											<div className="flex items-center justify-between h-10 mb-3">
-												<label className="block text-sm font-semibold text-slate-700">Anexar Documento (RG/CNH)</label>
-												{!attachedDocument && !isCameraOpen && (
-													<div className="flex bg-slate-100 p-1 rounded-lg">
-														<button
-															type="button"
-															onClick={() => setDocCaptureMode('upload')}
-															className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${docCaptureMode === 'upload' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-														>
-															Upload
-														</button>
-														<button
-															type="button"
-															onClick={() => setDocCaptureMode('camera')}
-															className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${docCaptureMode === 'camera' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-														>
-															Câmera
-														</button>
-													</div>
-												)}
+												<label className="block text-sm font-semibold text-slate-700">
+													Anexar Documento (RG/CNH)
+												</label>
+												{!attachedDocument &&
+													!isCameraOpen && (
+														<div className="flex bg-slate-100 p-1 rounded-lg">
+															<button
+																type="button"
+																onClick={() =>
+																	setDocCaptureMode(
+																		'upload',
+																	)
+																}
+																className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${docCaptureMode === 'upload' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+															>
+																Upload
+															</button>
+															<button
+																type="button"
+																onClick={() =>
+																	setDocCaptureMode(
+																		'camera',
+																	)
+																}
+																className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${docCaptureMode === 'camera' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+															>
+																Câmera
+															</button>
+														</div>
+													)}
 											</div>
-											<div className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-2xl transition-all ${attachedDocument ? 'border-green-400 bg-green-50' : 'border-slate-200 bg-slate-50 hover:border-primary-400 hover:bg-white'}`}>
+											<div
+												className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-2xl transition-all ${attachedDocument ? 'border-green-400 bg-green-50' : 'border-slate-200 bg-slate-50 hover:border-primary-400 hover:bg-white'}`}
+											>
 												{attachedDocument ? (
 													<div className="relative w-full h-full p-2">
-														<img src={attachedDocument} alt="Documento" className="w-full h-full object-contain rounded-lg" />
+														<img
+															src={
+																attachedDocument
+															}
+															alt="Documento"
+															className="w-full h-full object-contain rounded-lg"
+														/>
 														<button
 															type="button"
-															onClick={() => setAttachedDocument(null)}
+															onClick={() =>
+																setAttachedDocument(
+																	null,
+																)
+															}
 															className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors"
 														>
 															<Trash2 size={16} />
 														</button>
 													</div>
-												) : isCameraOpen && docCaptureMode === 'camera' ? (
+												) : isCameraOpen &&
+												  docCaptureMode ===
+														'camera' ? (
 													<div className="relative w-full h-full overflow-hidden rounded-2xl">
-														<video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+														<video
+															ref={videoRef}
+															autoPlay
+															playsInline
+															className="w-full h-full object-cover"
+														/>
 														<div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
 															<button
 																type="button"
-																onClick={() => takePhoto('doc')}
+																onClick={() =>
+																	takePhoto(
+																		'doc',
+																	)
+																}
 																className="p-3 bg-primary-600 text-white rounded-full shadow-xl hover:bg-primary-700"
 															>
-																<Camera size={24} />
+																<Camera
+																	size={24}
+																/>
 															</button>
 															<button
 																type="button"
-																onClick={stopCamera}
+																onClick={
+																	stopCamera
+																}
 																className="p-3 bg-slate-800 text-white rounded-full shadow-xl hover:bg-slate-900"
 															>
-																<RotateCcw size={24} />
+																<RotateCcw
+																	size={24}
+																/>
 															</button>
 														</div>
 													</div>
-												) : docCaptureMode === 'camera' ? (
+												) : docCaptureMode ===
+												  'camera' ? (
 													<button
 														type="button"
-														onClick={() => startCamera('doc')}
+														onClick={() =>
+															startCamera('doc')
+														}
 														className="flex flex-col items-center justify-center w-full h-full cursor-pointer"
 													>
 														<Camera className="w-10 h-10 text-slate-400 mb-2" />
-														<span className="text-sm text-slate-500 font-medium">Clique para abrir a câmera</span>
+														<span className="text-sm text-slate-500 font-medium">
+															Clique para abrir a
+															câmera
+														</span>
 													</button>
 												) : (
 													<label className="flex flex-col items-center justify-center w-full h-full cursor-pointer">
 														<Upload className="w-10 h-10 text-slate-400 mb-2" />
-														<span className="text-sm text-slate-500 font-medium">Clique para anexar foto do documento</span>
-														<input type="file" accept="image/*" onChange={handleDocumentUpload} className="hidden" />
+														<span className="text-sm text-slate-500 font-medium">
+															Clique para anexar
+															foto do documento
+														</span>
+														<input
+															type="file"
+															accept="image/*"
+															onChange={
+																handleDocumentUpload
+															}
+															className="hidden"
+														/>
 													</label>
 												)}
 											</div>
@@ -697,51 +850,89 @@ const Contracts: React.FC = () => {
 										{/* Tirar Foto */}
 										<div className="space-y-0">
 											<div className="flex items-center h-10 mb-3">
-												<label className="block text-sm font-semibold text-slate-700">Tirar Foto do Rosto</label>
+												<label className="block text-sm font-semibold text-slate-700">
+													Tirar Foto do Rosto
+												</label>
 											</div>
-											<div className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-2xl transition-all ${capturedPhoto ? 'border-green-400 bg-green-50' : 'border-slate-200 bg-slate-50 hover:border-primary-400 hover:bg-white'}`}>
+											<div
+												className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-2xl transition-all ${capturedPhoto ? 'border-green-400 bg-green-50' : 'border-slate-200 bg-slate-50 hover:border-primary-400 hover:bg-white'}`}
+											>
 												{capturedPhoto ? (
 													<div className="relative w-full h-full p-2">
-														<img src={capturedPhoto} alt="Foto" className="w-full h-full object-contain rounded-lg" />
+														<img
+															src={capturedPhoto}
+															alt="Foto"
+															className="w-full h-full object-contain rounded-lg"
+														/>
 														<button
 															type="button"
-															onClick={() => setCapturedPhoto(null)}
+															onClick={() =>
+																setCapturedPhoto(
+																	null,
+																)
+															}
 															className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors"
 														>
 															<Trash2 size={16} />
 														</button>
 													</div>
-												) : isCameraOpen && docCaptureMode !== 'camera' ? (
+												) : isCameraOpen &&
+												  docCaptureMode !==
+														'camera' ? (
 													<div className="relative w-full h-full overflow-hidden rounded-2xl">
-														<video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+														<video
+															ref={videoRef}
+															autoPlay
+															playsInline
+															className="w-full h-full object-cover"
+														/>
 														<div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
 															<button
 																type="button"
-																onClick={() => takePhoto('face')}
+																onClick={() =>
+																	takePhoto(
+																		'face',
+																	)
+																}
 																className="p-3 bg-primary-600 text-white rounded-full shadow-xl hover:bg-primary-700"
 															>
-																<Camera size={24} />
+																<Camera
+																	size={24}
+																/>
 															</button>
 															<button
 																type="button"
-																onClick={stopCamera}
+																onClick={
+																	stopCamera
+																}
 																className="p-3 bg-slate-800 text-white rounded-full shadow-xl hover:bg-slate-900"
 															>
-																<RotateCcw size={24} />
+																<RotateCcw
+																	size={24}
+																/>
 															</button>
 														</div>
 													</div>
 												) : (
 													<button
 														type="button"
-														onClick={() => startCamera('face')}
+														onClick={() =>
+															startCamera('face')
+														}
 														className="flex flex-col items-center justify-center w-full h-full cursor-pointer"
 													>
 														<Camera className="w-10 h-10 text-slate-400 mb-2" />
-														<span className="text-sm text-slate-500 font-medium">Clique para abrir a câmera</span>
+														<span className="text-sm text-slate-500 font-medium">
+															Clique para abrir a
+															câmera
+														</span>
 													</button>
 												)}
-												{cameraError && <p className="text-xs text-red-500 mt-2 px-4 text-center">{cameraError}</p>}
+												{cameraError && (
+													<p className="text-xs text-red-500 mt-2 px-4 text-center">
+														{cameraError}
+													</p>
+												)}
 											</div>
 										</div>
 									</div>
@@ -756,19 +947,26 @@ const Contracts: React.FC = () => {
 										Assinatura Digital
 									</h3>
 									<div className="space-y-4">
-										<p className="text-sm text-slate-500">Utilize o mouse ou o dedo para desenhar sua assinatura no quadro abaixo:</p>
+										<p className="text-sm text-slate-500">
+											Utilize o mouse ou o dedo para
+											desenhar sua assinatura no quadro
+											abaixo:
+										</p>
 										<div className="border-2 border-slate-200 rounded-2xl bg-slate-50 overflow-hidden">
 											<SignatureCanvas
 												ref={sigCanvasRef}
 												penColor="black"
 												canvasProps={{
-													className: 'w-full h-48 cursor-crosshair',
+													className:
+														'w-full h-48 cursor-crosshair',
 												}}
 											/>
 										</div>
 										<button
 											type="button"
-											onClick={() => sigCanvasRef.current?.clear()}
+											onClick={() =>
+												sigCanvasRef.current?.clear()
+											}
 											className="text-sm font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1"
 										>
 											<RotateCcw size={14} />
@@ -791,7 +989,10 @@ const Contracts: React.FC = () => {
 										>
 											{isGenerating ? (
 												<>
-													<Loader2 size={20} className="animate-spin" />
+													<Loader2
+														size={20}
+														className="animate-spin"
+													/>
 													Gerando Contrato Completo...
 												</>
 											) : (
@@ -806,10 +1007,20 @@ const Contracts: React.FC = () => {
 											{isSubmitted && (
 												<div className="p-6 bg-green-50 rounded-2xl border border-green-200 text-center">
 													<div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-														<CheckCircle size={24} />
+														<CheckCircle
+															size={24}
+														/>
 													</div>
-													<h4 className="text-lg font-bold text-green-900 mb-1">Contrato enviado com sucesso!</h4>
-													<p className="text-green-700">Nossa equipe recebeu seu contrato e em breve entrará em contato com você.</p>
+													<h4 className="text-lg font-bold text-green-900 mb-1">
+														Contrato enviado com
+														sucesso!
+													</h4>
+													<p className="text-green-700">
+														Nossa equipe recebeu seu
+														contrato e em breve
+														entrará em contato com
+														você.
+													</p>
 												</div>
 											)}
 											<div className="flex flex-col md:flex-row gap-4">
@@ -819,16 +1030,21 @@ const Contracts: React.FC = () => {
 													className="flex-1 px-8 py-4 rounded-xl bg-green-600 text-white font-bold text-lg hover:bg-green-700 active:scale-95 transition-all shadow-lg shadow-green-500/25 flex items-center justify-center gap-2"
 												>
 													<FileDown size={20} />
-													Baixar Contrato Completo (PDF)
+													Baixar Contrato Completo
+													(PDF)
 												</a>
 												<button
 													type="button"
 													onClick={() => {
-														URL.revokeObjectURL(pdfUrl);
+														URL.revokeObjectURL(
+															pdfUrl,
+														);
 														setPdfUrl(null);
 														setIsSubmitted(false);
 														setCapturedPhoto(null);
-														setAttachedDocument(null);
+														setAttachedDocument(
+															null,
+														);
 														sigCanvasRef.current?.clear();
 													}}
 													className="px-8 py-4 rounded-xl bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition-colors"
@@ -850,7 +1066,11 @@ const Contracts: React.FC = () => {
 										Informações Importantes
 									</h4>
 									<p className="text-sm text-slate-500 leading-relaxed">
-										O contrato gerado incluirá seus dados, sua assinatura desenhada e os anexos (documento e foto) em um único arquivo PDF. Certifique-se de que as imagens estejam nítidas.
+										O contrato gerado incluirá seus dados,
+										sua assinatura desenhada e os anexos
+										(documento e foto) em um único arquivo
+										PDF. Certifique-se de que as imagens
+										estejam nítidas.
 									</p>
 								</div>
 							</div>
