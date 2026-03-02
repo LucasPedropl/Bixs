@@ -299,33 +299,23 @@ const Contracts: React.FC = () => {
 											<label className={labelClasses}>
 												Segmento de Negócio
 											</label>
-											<select
+											<input
+												list="segmentos"
 												name="segmento"
 												value={formData.segmento}
 												onChange={handleChange}
 												className={inputClasses}
+												placeholder="Selecione ou digite o segmento"
 												required
-											>
-												<option value="">
-													Selecione o segmento
-												</option>
-												<option value="Evento">
-													Evento
-												</option>
-												<option value="Bar">Bar</option>
-												<option value="Restaurante">
-													Restaurante
-												</option>
-												<option value="Loja">
-													Loja
-												</option>
-												<option value="Hortifruti">
-													Hortifruti
-												</option>
-												<option value="Conveniência">
-													Conveniência
-												</option>
-											</select>
+											/>
+											<datalist id="segmentos">
+												<option value="Evento" />
+												<option value="Bar" />
+												<option value="Restaurante" />
+												<option value="Loja" />
+												<option value="Hortifruti" />
+												<option value="Conveniência" />
+											</datalist>
 										</div>
 
 										{formData.segmento === 'Evento' && (
@@ -372,7 +362,8 @@ const Contracts: React.FC = () => {
 													>
 														Quantidade de Máquinas
 													</label>
-													<select
+													<input
+														list="maquinas"
 														name="qtdeMaquinas"
 														value={
 															formData.qtdeMaquinas ||
@@ -380,24 +371,20 @@ const Contracts: React.FC = () => {
 														}
 														onChange={handleChange}
 														className={inputClasses}
+														placeholder="Selecione ou digite a quantidade"
 														required
-													>
-														<option value="">
-															Selecione a
-															quantidade
-														</option>
+													/>
+													<datalist id="maquinas">
 														{Array.from(
 															{ length: 31 },
 															(_, i) => (
 																<option
 																	key={i}
 																	value={i}
-																>
-																	{i}
-																</option>
+																/>
 															),
 														)}
-													</select>
+													</datalist>
 												</div>
 											</>
 										)}
