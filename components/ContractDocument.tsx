@@ -87,12 +87,21 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 	},
 	signatureBlock: {
-		width: '40%',
+		width: '45%',
+		alignItems: 'center',
+		textAlign: 'center',
+	},
+	signatureLine: {
+		width: '100%',
 		borderTopWidth: 1,
 		borderTopColor: '#000',
 		paddingTop: 5,
 		alignItems: 'center',
-		textAlign: 'center',
+	},
+	signatureImage: {
+		width: 120,
+		height: 45,
+		marginBottom: -5, // Puxa a assinatura um pouco para cima da linha
 	},
 	footer: {
 		position: 'absolute',
@@ -122,6 +131,10 @@ interface ContractData {
 	dataFim?: string;
 	qtdeMaquinas?: string;
 	qtdeLicencas?: string;
+	// Novos campos para assinatura e anexos
+	signature?: string; // Data URL
+	attachedDocument?: string; // Data URL
+	capturedPhoto?: string; // Data URL
 }
 
 interface ContractDocumentProps {
@@ -331,12 +344,25 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 
 				<View style={styles.signatureSection} wrap={false}>
 					<View style={styles.signatureBlock}>
-						<Text style={styles.bold}>CONTRATADO</Text>
-						<Text>BIX SOLUÇÕES</Text>
+						<View style={{ height: 45 }} /> {/* Espaço para alinhar com o outro lado */}
+						<View style={styles.signatureLine}>
+							<Text style={styles.bold}>CONTRATADO</Text>
+							<Text>BIX SOLUÇÕES</Text>
+						</View>
 					</View>
 					<View style={styles.signatureBlock}>
-						<Text style={styles.bold}>CONTRATANTE</Text>
-						<Text>{data.contratante || 'Cliente'}</Text>
+						{data.signature ? (
+							<Image
+								src={data.signature}
+								style={styles.signatureImage}
+							/>
+						) : (
+							<View style={{ height: 45 }} />
+						)}
+						<View style={styles.signatureLine}>
+							<Text style={styles.bold}>CONTRATANTE</Text>
+							<Text>{data.contratante || 'Cliente'}</Text>
+						</View>
 					</View>
 				</View>
 
@@ -348,6 +374,33 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 					}
 				/>
 			</Page>
+
+			{/* Páginas de Anexos */}
+			{data.attachedDocument && (
+				<Page size="A4" style={styles.page}>
+					<Text style={styles.title}>ANEXO: DOCUMENTO DO CLIENTE</Text>
+					<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+						<Image
+							src={data.attachedDocument}
+							style={{ maxWidth: '100%', maxHeight: '80%', objectFit: 'contain' }}
+						/>
+					</View>
+					<Text style={styles.footer} fixed render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+				</Page>
+			)}
+
+			{data.capturedPhoto && (
+				<Page size="A4" style={styles.page}>
+					<Text style={styles.title}>ANEXO: FOTO DO CLIENTE</Text>
+					<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+						<Image
+							src={data.capturedPhoto}
+							style={{ maxWidth: '100%', maxHeight: '80%', objectFit: 'contain' }}
+						/>
+					</View>
+					<Text style={styles.footer} fixed render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+				</Page>
+			)}
 		</Document>
 	);
 };
