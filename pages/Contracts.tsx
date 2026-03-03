@@ -213,7 +213,7 @@ const Contracts: React.FC = () => {
 	// Novos estados para anexos e assinatura
 	const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
 	const [attachedDocument, setAttachedDocument] = useState<string | null>(null);
-	const [isCameraOpen, setIsCameraOpen] = useState(false);
+	const [activeCamera, setActiveCamera] = useState<'doc' | 'face' | null>(null);
 	const [cameraError, setCameraError] = useState<string | null>(null);
 	const [docCaptureMode, setDocCaptureMode] = useState<'upload' | 'camera'>('upload');
 	const [errors, setErrors] = useState<Record<string, string>>({});
@@ -428,7 +428,7 @@ const Contracts: React.FC = () => {
 
 	// Lógica da Câmera
 	const startCamera = async (target: 'doc' | 'face') => {
-		setIsCameraOpen(true);
+		setActiveCamera(target);
 		setCameraError(null);
 		try {
 			const stream = await navigator.mediaDevices.getUserMedia({
@@ -440,6 +440,7 @@ const Contracts: React.FC = () => {
 		} catch (err) {
 			console.error('Erro ao acessar câmera:', err);
 			setCameraError('Não foi possível acessar a câmera. Verifique as permissões.');
+			setActiveCamera(null);
 		}
 	};
 
@@ -449,7 +450,7 @@ const Contracts: React.FC = () => {
 			tracks.forEach((track) => track.stop());
 			videoRef.current.srcObject = null;
 		}
-		setIsCameraOpen(false);
+		setActiveCamera(null);
 	};
 
 	const takePhoto = (target: 'doc' | 'face') => {
@@ -1012,7 +1013,7 @@ const Contracts: React.FC = () => {
 										<div className="space-y-0">
 											<div className="flex items-center justify-between h-10 mb-3">
 												<label className="block text-sm font-semibold text-slate-700">Anexar Documento (RG/CNH)</label>
-												{!attachedDocument && !isCameraOpen && (
+												{!attachedDocument && !activeCamera && (
 													<div className="flex bg-slate-100 p-1 rounded-lg">
 														<button
 															type="button"
@@ -1043,7 +1044,7 @@ const Contracts: React.FC = () => {
 															<Trash2 size={16} />
 														</button>
 													</div>
-												) : isCameraOpen && docCaptureMode === 'camera' ? (
+												) : activeCamera === 'doc' ? (
 													<div className="relative w-full h-full overflow-hidden rounded-2xl">
 														<video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
 														<div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
@@ -1099,7 +1100,7 @@ const Contracts: React.FC = () => {
 															<Trash2 size={16} />
 														</button>
 													</div>
-												) : isCameraOpen && docCaptureMode !== 'camera' ? (
+												) : activeCamera === 'face' ? (
 													<div className="relative w-full h-full overflow-hidden rounded-2xl">
 														<video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
 														<div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
