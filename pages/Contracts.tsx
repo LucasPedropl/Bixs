@@ -171,6 +171,7 @@ interface FormData {
 	cidade: string;
 	uf: string;
 	cep: string;
+	complemento: string;
 	contato: string;
 	email: string;
 	responsavel: string;
@@ -195,6 +196,7 @@ const Contracts: React.FC = () => {
 		cidade: '',
 		uf: '',
 		cep: '',
+		complemento: '',
 		contato: '',
 		email: '',
 		responsavel: '',
@@ -797,6 +799,18 @@ const Contracts: React.FC = () => {
 												required
 											/>
 											{errors.uf && <p className="text-xs text-red-500 mt-1">{errors.uf}</p>}
+										</div>
+
+										<div className="md:col-span-4">
+											<label className={labelClasses}>Complemento</label>
+											<input
+												type="text"
+												name="complemento"
+												value={formData.complemento}
+												onChange={handleChange}
+												className={inputClasses}
+												placeholder="Apto, Bloco, Sala, etc. (Opcional)"
+											/>
 										</div>
 									</div>
 								</div>

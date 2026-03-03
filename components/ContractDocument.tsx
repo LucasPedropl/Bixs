@@ -127,6 +127,7 @@ interface ContractData {
 	cidade: string;
 	uf: string;
 	cep: string;
+	complemento?: string;
 	contato: string;
 	email: string;
 	responsavel: string;
@@ -183,7 +184,8 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 					<View style={styles.fieldRow}>
 						<Text style={styles.label}>ENDEREÇO:</Text>
 						<Text style={styles.value}>
-							{data.rua}, {data.semNumero ? 'S/N' : data.numero}, {data.bairro}, {data.cidade} - {data.uf}, CEP: {data.cep}
+							{data.rua}, {data.semNumero ? 'S/N' : data.numero}
+							{data.complemento ? `, ${data.complemento}` : ''}, {data.bairro}, {data.cidade} - {data.uf}, CEP: {data.cep}
 						</Text>
 					</View>
 					<View style={styles.fieldRow}>
