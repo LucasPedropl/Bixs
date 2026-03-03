@@ -120,7 +120,13 @@ const styles = StyleSheet.create({
 interface ContractData {
 	contratante: string;
 	cpfCnpj: string;
-	endereco: string;
+	rua: string;
+	numero: string;
+	semNumero: boolean;
+	bairro: string;
+	cidade: string;
+	uf: string;
+	cep: string;
 	contato: string;
 	email: string;
 	responsavel: string;
@@ -131,6 +137,8 @@ interface ContractData {
 	dataFim?: string;
 	qtdeMaquinas?: string;
 	qtdeLicencas?: string;
+	cupomDesconto?: string;
+	semFidelidade?: boolean;
 	// Novos campos para assinatura e anexos
 	signature?: string; // Data URL
 	attachedDocument?: string; // Data URL
@@ -174,7 +182,9 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 					</View>
 					<View style={styles.fieldRow}>
 						<Text style={styles.label}>ENDEREÇO:</Text>
-						<Text style={styles.value}>{data.endereco}</Text>
+						<Text style={styles.value}>
+							{data.rua}, {data.semNumero ? 'S/N' : data.numero}, {data.bairro}, {data.cidade} - {data.uf}, CEP: {data.cep}
+						</Text>
 					</View>
 					<View style={styles.fieldRow}>
 						<Text style={styles.label}>CONTATO:</Text>
@@ -261,11 +271,7 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 				<View style={styles.section}>
 					<Text style={styles.clauseTitle}>Disposições Gerais</Text>
 					<Text style={styles.paragraph}>
-						PARÁGRAFO PRIMEIRO: Caso a CONTRATANTE deseje rescindir
-						o presente instrumento, antes de 30 (Trinta dias) pagará
-						à CONTRATADA a título de multa, o equivalente a R$
-						100,00 (Cem Reais) e QUITAR os títulos em aberto
-						referente aos equipamentos e serviços.
+						PARÁGRAFO PRIMEIRO: {data.semFidelidade ? 'O presente contrato NÃO POSSUI FIDELIDADE.' : 'Caso a CONTRATANTE deseje rescindir o presente instrumento, antes de 30 (Trinta dias) pagará à CONTRATADA a título de multa, o equivalente a R$ 100,00 (Cem Reais) e QUITAR os títulos em aberto referente aos equipamentos e serviços.'}
 					</Text>
 					<Text style={styles.paragraph}>
 						CLÁUSULA 3ª Após aprovação o pagamento deve ser
@@ -303,8 +309,21 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 								fontFamily: 'Helvetica-Bold',
 							}}
 						>
-							Adesão UAI PDV Mais: R$ 379,90
+							Adesão UAI PDV Mais: R$ 250,00
 						</Text>
+						<Text
+							style={{
+								marginTop: 2,
+								fontFamily: 'Helvetica-Bold',
+							}}
+						>
+							Valor da Mensalidade: R$ 189,90 (Conforme variação de licenças)
+						</Text>
+						{data.cupomDesconto && (
+							<Text style={{ marginTop: 2, color: '#059669' }}>
+								• Cupom de Desconto Aplicado: {data.cupomDesconto}
+							</Text>
+						)}
 					</View>
 				</View>
 

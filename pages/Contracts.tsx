@@ -16,16 +16,58 @@ import {
 	Search,
 } from 'lucide-react';
 
-const SEGMENTOS = [
-	'Evento',
-	'Bar',
-	'Restaurante',
-	'Loja',
-	'Hortifruti',
-	'Conveniência',
-];
+const SEGMENTOS = ['Evento', 'Bar', 'Restaurante', 'Loja', 'Hortifruti', 'Conveniência'];
 const MAQUINAS = Array.from({ length: 31 }, (_, i) => i.toString());
-const LICENCAS = Array.from({ length: 21 }, (_, i) => (i + 1).toString());
+const LICENCAS = Array.from({ length: 99 }, (_, i) => (i + 1).toString());
+const CUPONS = ['ADE30%W', 'ADE50Y', 'ADE70JZ', 'MEN2B', 'MEN3A'];
+
+const isValidCPF = (cpf: string) => {
+	cpf = cpf.replace(/[^\d]+/g, '');
+	if (cpf.length !== 11 || !!cpf.match(/(\d)\1{10}/)) return false;
+	let add = 0;
+	for (let i = 0; i < 9; i++) add += parseInt(cpf.charAt(i)) * (10 - i);
+	let rev = 11 - (add % 11);
+	if (rev === 10 || rev === 11) rev = 0;
+	if (rev !== parseInt(cpf.charAt(9))) return false;
+	add = 0;
+	for (let i = 0; i < 10; i++) add += parseInt(cpf.charAt(i)) * (11 - i);
+	rev = 11 - (add % 11);
+	if (rev === 10 || rev === 11) rev = 0;
+	if (rev !== parseInt(cpf.charAt(10))) return false;
+	return true;
+};
+
+const isValidCNPJ = (cnpj: string) => {
+	cnpj = cnpj.replace(/[^\d]+/g, '');
+	if (cnpj.length !== 14) return false;
+	if (cnpj === "00000000000000" || cnpj === "11111111111111" || cnpj === "22222222222222" || cnpj === "33333333333333" || cnpj === "44444444444444" || cnpj === "55555555555555" || cnpj === "66666666666666" || cnpj === "77777777777777" || cnpj === "88888888888888" || cnpj === "99999999999999") return false;
+	let size = cnpj.length - 2;
+	let numbers = cnpj.substring(0, size);
+	let digits = cnpj.substring(size);
+	let sum = 0;
+	let pos = size - 7;
+	for (let i = size; i >= 1; i--) {
+		sum += parseInt(numbers.charAt(size - i)) * pos--;
+		if (pos < 2) pos = 9;
+	}
+	let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+	if (result !== parseInt(digits.charAt(0))) return false;
+	size = size + 1;
+	numbers = cnpj.substring(0, size);
+	sum = 0;
+	pos = size - 7;
+	for (let i = size; i >= 1; i--) {
+		sum += parseInt(numbers.charAt(size - i)) * pos--;
+		if (pos < 2) pos = 9;
+	}
+	result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+	if (result !== parseInt(digits.charAt(1))) return false;
+	return true;
+};
+
+const isValidEmail = (email: string) => {
+	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
 
 interface SearchableSelectProps {
 	label: string;
@@ -65,23 +107,17 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
 	// Fechar ao clicar fora
 	React.useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				containerRef.current &&
-				!containerRef.current.contains(event.target as Node)
-			) {
+			if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
 				setIsOpen(false);
 			}
 		};
 		document.addEventListener('mousedown', handleClickOutside);
-		return () =>
-			document.removeEventListener('mousedown', handleClickOutside);
+		return () => document.removeEventListener('mousedown', handleClickOutside);
 	}, []);
 
 	return (
 		<div className="relative space-y-2" ref={containerRef}>
-			<label className="block text-sm font-semibold text-slate-700">
-				{label}
-			</label>
+			<label className="block text-sm font-semibold text-slate-700">{label}</label>
 			<div className="relative">
 				<input
 					type="text"
@@ -120,11 +156,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
 				</div>
 			)}
 
-			{error && (
-				<p className="text-xs font-medium text-red-500 mt-1 animate-in fade-in slide-in-from-top-1">
-					{error}
-				</p>
-			)}
+			{error && <p className="text-xs font-medium text-red-500 mt-1 animate-in fade-in slide-in-from-top-1">{error}</p>}
 		</div>
 	);
 };
@@ -132,7 +164,13 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
 interface FormData {
 	contratante: string;
 	cpfCnpj: string;
-	endereco: string;
+	rua: string;
+	numero: string;
+	semNumero: boolean;
+	bairro: string;
+	cidade: string;
+	uf: string;
+	cep: string;
 	contato: string;
 	email: string;
 	responsavel: string;
@@ -142,18 +180,28 @@ interface FormData {
 	dataFim?: string;
 	qtdeMaquinas?: string;
 	qtdeLicencas?: string;
+	cupomDesconto: string;
+	semFidelidade: boolean;
 }
 
 const Contracts: React.FC = () => {
 	const [formData, setFormData] = useState<FormData>({
 		contratante: '',
 		cpfCnpj: '',
-		endereco: '',
+		rua: '',
+		numero: '',
+		semNumero: false,
+		bairro: '',
+		cidade: '',
+		uf: '',
+		cep: '',
 		contato: '',
 		email: '',
 		responsavel: '',
 		cpfResponsavel: '',
 		segmento: '',
+		cupomDesconto: '',
+		semFidelidade: true,
 	});
 
 	const [isGenerating, setIsGenerating] = useState(false);
@@ -162,19 +210,87 @@ const Contracts: React.FC = () => {
 
 	// Novos estados para anexos e assinatura
 	const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
-	const [attachedDocument, setAttachedDocument] = useState<string | null>(
-		null,
-	);
+	const [attachedDocument, setAttachedDocument] = useState<string | null>(null);
 	const [isCameraOpen, setIsCameraOpen] = useState(false);
 	const [cameraError, setCameraError] = useState<string | null>(null);
-	const [docCaptureMode, setDocCaptureMode] = useState<'upload' | 'camera'>(
-		'upload',
-	);
+	const [docCaptureMode, setDocCaptureMode] = useState<'upload' | 'camera'>('upload');
 	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [isFetchingCep, setIsFetchingCep] = useState(false);
 
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const sigCanvasRef = useRef<SignatureCanvas>(null);
+	const sigContainerRef = useRef<HTMLDivElement>(null);
+
+	// Ajustar tamanho do canvas de assinatura para evitar offset
+	const resizeCanvas = () => {
+		if (sigCanvasRef.current && sigContainerRef.current) {
+			const canvas = sigCanvasRef.current.getCanvas();
+			const container = sigContainerRef.current;
+			
+			// Salvar assinatura atual se houver
+			const isEmpty = sigCanvasRef.current.isEmpty();
+			const data = !isEmpty ? sigCanvasRef.current.toDataURL() : null;
+			
+			// Ajustar dimensões internas para as dimensões de exibição
+			// Usamos offsetWidth/Height para pegar o tamanho real do elemento no DOM
+			canvas.width = container.offsetWidth;
+			canvas.height = container.offsetHeight;
+			
+			// Limpar e restaurar assinatura se houver
+			sigCanvasRef.current.clear();
+			if (data) {
+				sigCanvasRef.current.fromDataURL(data);
+			}
+		}
+	};
+
+	React.useEffect(() => {
+		// Pequeno delay para garantir que o layout assentou e o container tem dimensões
+		const timer = setTimeout(resizeCanvas, 200);
+		window.addEventListener('resize', resizeCanvas);
+		return () => {
+			clearTimeout(timer);
+			window.removeEventListener('resize', resizeCanvas);
+		};
+	}, []);
+
+	const fetchAddressByCep = async (cep: string) => {
+		const cleanCep = cep.replace(/\D/g, '');
+		if (cleanCep.length !== 8) return;
+
+		setIsFetchingCep(true);
+		try {
+			const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+			const data = await response.json();
+
+			if (data.erro) {
+				setErrors(prev => ({ ...prev, cep: 'CEP não encontrado.' }));
+			} else {
+				setFormData(prev => ({
+					...prev,
+					rua: data.logradouro || '',
+					bairro: data.bairro || '',
+					cidade: data.localidade || '',
+					uf: data.uf || '',
+				}));
+				setErrors(prev => {
+					const newErrors = { ...prev };
+					delete newErrors.cep;
+					delete newErrors.rua;
+					delete newErrors.bairro;
+					delete newErrors.cidade;
+					delete newErrors.uf;
+					return newErrors;
+				});
+			}
+		} catch (error) {
+			console.error('Erro ao buscar CEP:', error);
+			setErrors(prev => ({ ...prev, cep: 'Erro ao buscar CEP.' }));
+		} finally {
+			setIsFetchingCep(false);
+		}
+	};
 
 	// Funções auxiliares de máscara
 	const formatCpfCnpj = (value: string) => {
@@ -233,67 +349,73 @@ const Contracts: React.FC = () => {
 		handleValueChange(name, value);
 	};
 
-	const handleValueChange = (name: string, value: string) => {
+	const handleValueChange = (name: string, value: string | boolean) => {
 		let formattedValue = value;
 
 		// Aplicar máscaras baseadas no nome do campo
-		if (name === 'cpfCnpj') {
+		if (name === 'cpfCnpj' && typeof value === 'string') {
 			formattedValue = formatCpfCnpj(value);
-		} else if (name === 'contato') {
+		} else if (name === 'contato' && typeof value === 'string') {
 			formattedValue = formatPhone(value);
-		} else if (name === 'cpfResponsavel') {
+		} else if (name === 'cpfResponsavel' && typeof value === 'string') {
 			formattedValue = formatCpf(value);
+		} else if (name === 'cep' && typeof value === 'string') {
+			formattedValue = value.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').substring(0, 9);
+			if (formattedValue.replace(/\D/g, '').length === 8) {
+				fetchAddressByCep(formattedValue);
+			}
 		}
 
 		setFormData((prev) => ({ ...prev, [name]: formattedValue }));
 
-		// Validação em tempo real para campos específicos
-		if (name === 'segmento') {
-			if (value && !SEGMENTOS.includes(value)) {
-				setErrors((prev) => ({
-					...prev,
-					segmento: 'Por favor, selecione uma opção válida da lista.',
-				}));
-			} else {
-				setErrors((prev) => {
-					const newErrors = { ...prev };
-					delete newErrors.segmento;
-					return newErrors;
-				});
-			}
-		}
+		// Validação em tempo real
+		setErrors((prev) => {
+			const newErrors = { ...prev };
 
-		if (name === 'qtdeMaquinas') {
-			if (value && !MAQUINAS.includes(value)) {
-				setErrors((prev) => ({
-					...prev,
-					qtdeMaquinas:
-						'Por favor, selecione uma quantidade válida (0-30).',
-				}));
-			} else {
-				setErrors((prev) => {
-					const newErrors = { ...prev };
-					delete newErrors.qtdeMaquinas;
-					return newErrors;
-				});
+			if (name === 'contratante') {
+				if (!value) newErrors.contratante = 'Nome da contratante é obrigatório.';
+				else delete newErrors.contratante;
 			}
-		}
 
-		if (name === 'qtdeLicencas') {
-			if (value && !LICENCAS.includes(value)) {
-				setErrors((prev) => ({
-					...prev,
-					qtdeLicencas:
-						'Por favor, selecione uma quantidade válida (1-20).',
-				}));
-			} else {
-				setErrors((prev) => {
-					const newErrors = { ...prev };
-					delete newErrors.qtdeLicencas;
-					return newErrors;
-				});
+			if (name === 'cpfCnpj' && typeof value === 'string') {
+				const clean = value.replace(/\D/g, '');
+				if (clean.length <= 11) {
+					if (clean.length > 0 && !isValidCPF(clean)) newErrors.cpfCnpj = 'CPF inválido.';
+					else delete newErrors.cpfCnpj;
+				} else {
+					if (!isValidCNPJ(clean)) newErrors.cpfCnpj = 'CNPJ inválido.';
+					else delete newErrors.cpfCnpj;
+				}
 			}
-		}
+
+			if (name === 'email' && typeof value === 'string') {
+				if (value && !isValidEmail(value)) newErrors.email = 'E-mail inválido.';
+				else delete newErrors.email;
+			}
+
+			if (name === 'cpfResponsavel' && typeof value === 'string') {
+				const clean = value.replace(/\D/g, '');
+				if (clean.length > 0 && !isValidCPF(clean)) newErrors.cpfResponsavel = 'CPF inválido.';
+				else delete newErrors.cpfResponsavel;
+			}
+
+			if (name === 'segmento' && typeof value === 'string') {
+				if (value && !SEGMENTOS.includes(value)) newErrors.segmento = 'Selecione uma opção válida.';
+				else delete newErrors.segmento;
+			}
+
+			if (name === 'qtdeMaquinas' && typeof value === 'string') {
+				if (value && !MAQUINAS.includes(value)) newErrors.qtdeMaquinas = 'Quantidade inválida (0-30).';
+				else delete newErrors.qtdeMaquinas;
+			}
+
+			if (name === 'qtdeLicencas' && typeof value === 'string') {
+				if (value && !LICENCAS.includes(value)) newErrors.qtdeLicencas = 'Quantidade inválida (1-99).';
+				else delete newErrors.qtdeLicencas;
+			}
+
+			return newErrors;
+		});
 
 		// Se o usuário mudar algo, invalida o PDF anterior para forçar nova geração
 		if (pdfUrl) {
@@ -308,26 +430,20 @@ const Contracts: React.FC = () => {
 		setCameraError(null);
 		try {
 			const stream = await navigator.mediaDevices.getUserMedia({
-				video: {
-					facingMode: target === 'doc' ? 'environment' : 'user',
-				},
+				video: { facingMode: target === 'doc' ? 'environment' : 'user' },
 			});
 			if (videoRef.current) {
 				videoRef.current.srcObject = stream;
 			}
 		} catch (err) {
 			console.error('Erro ao acessar câmera:', err);
-			setCameraError(
-				'Não foi possível acessar a câmera. Verifique as permissões.',
-			);
+			setCameraError('Não foi possível acessar a câmera. Verifique as permissões.');
 		}
 	};
 
 	const stopCamera = () => {
 		if (videoRef.current && videoRef.current.srcObject) {
-			const tracks = (
-				videoRef.current.srcObject as MediaStream
-			).getTracks();
+			const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
 			tracks.forEach((track) => track.stop());
 			videoRef.current.srcObject = null;
 		}
@@ -366,29 +482,85 @@ const Contracts: React.FC = () => {
 		}
 	};
 
+	const validateForm = () => {
+		const newErrors: Record<string, string> = {};
+
+		if (!formData.contratante) newErrors.contratante = 'Nome da contratante é obrigatório.';
+		
+		const cleanCpfCnpj = formData.cpfCnpj.replace(/\D/g, '');
+		if (!cleanCpfCnpj) {
+			newErrors.cpfCnpj = 'CPF/CNPJ é obrigatório.';
+		} else if (cleanCpfCnpj.length <= 11) {
+			if (!isValidCPF(cleanCpfCnpj)) newErrors.cpfCnpj = 'CPF inválido.';
+		} else {
+			if (!isValidCNPJ(cleanCpfCnpj)) newErrors.cpfCnpj = 'CNPJ inválido.';
+		}
+
+		if (!formData.cep) newErrors.cep = 'CEP é obrigatório.';
+		if (!formData.rua) newErrors.rua = 'Rua é obrigatória.';
+		if (!formData.numero && !formData.semNumero) newErrors.numero = 'Número é obrigatório.';
+		if (!formData.bairro) newErrors.bairro = 'Bairro é obrigatório.';
+		if (!formData.cidade) newErrors.cidade = 'Cidade é obrigatória.';
+		if (!formData.uf) newErrors.uf = 'UF é obrigatória.';
+		if (!formData.contato) newErrors.contato = 'Contato é obrigatório.';
+		
+		if (!formData.email) {
+			newErrors.email = 'E-mail é obrigatório.';
+		} else if (!isValidEmail(formData.email)) {
+			newErrors.email = 'E-mail inválido.';
+		}
+
+		if (!formData.responsavel) newErrors.responsavel = 'Nome do responsável é obrigatório.';
+		
+		const cleanCpfResp = formData.cpfResponsavel.replace(/\D/g, '');
+		if (!cleanCpfResp) {
+			newErrors.cpfResponsavel = 'CPF do responsável é obrigatório.';
+		} else if (!isValidCPF(cleanCpfResp)) {
+			newErrors.cpfResponsavel = 'CPF inválido.';
+		}
+
+		if (!formData.segmento) newErrors.segmento = 'Segmento é obrigatório.';
+		else if (!SEGMENTOS.includes(formData.segmento)) newErrors.segmento = 'Selecione um segmento válido.';
+
+		if (formData.segmento === 'Evento') {
+			if (!formData.dataInicio) newErrors.dataInicio = 'Data de início é obrigatória.';
+			if (!formData.dataFim) newErrors.dataFim = 'Data de fim é obrigatória.';
+			if (!formData.qtdeMaquinas) newErrors.qtdeMaquinas = 'Quantidade de máquinas é obrigatória.';
+		} else if (formData.segmento) {
+			if (!formData.qtdeLicencas) newErrors.qtdeLicencas = 'Quantidade de licenças é obrigatória.';
+		}
+
+		setErrors(newErrors);
+		return Object.keys(newErrors).length === 0;
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		// Verificar se há erros de validação
-		if (Object.keys(errors).length > 0) {
-			alert(
-				'Por favor, corrija os erros no formulário antes de prosseguir.',
-			);
+		if (!validateForm()) {
+			alert('Por favor, preencha todos os campos obrigatórios corretamente.');
 			return;
 		}
 
 		if (!sigCanvasRef.current || sigCanvasRef.current.isEmpty()) {
-			alert(
-				'Por favor, desenhe sua assinatura antes de gerar o contrato.',
-			);
+			alert('Por favor, desenhe sua assinatura antes de gerar o contrato.');
+			return;
+		}
+
+		if (!attachedDocument) {
+			alert('Por favor, anexe o documento (RG/CNH).');
+			return;
+		}
+
+		if (!capturedPhoto) {
+			alert('Por favor, tire uma foto do rosto.');
 			return;
 		}
 
 		setIsGenerating(true);
 
 		try {
-			const signatureDataUrl =
-				sigCanvasRef.current.toDataURL('image/png');
+			const signatureDataUrl = sigCanvasRef.current.toDataURL('image/png');
 
 			// Gera o blob do PDF manualmente com todos os dados
 			const blob = await pdf(
@@ -403,42 +575,6 @@ const Contracts: React.FC = () => {
 			).toBlob();
 			const url = URL.createObjectURL(blob);
 			setPdfUrl(url);
-
-			// Enviar para a API externa
-			const formDataToSend = new FormData();
-			formDataToSend.append('clientName', formData.contratante);
-			formDataToSend.append('email', formData.email);
-			formDataToSend.append(
-				'pdf',
-				blob,
-				`Contrato_${formData.contratante.replace(/\s+/g, '_')}.pdf`,
-			);
-
-			try {
-				const response = await fetch(
-					'http://localhost:3001/api/send-contract',
-					{
-						method: 'POST',
-						body: formDataToSend,
-					},
-				);
-
-				if (!response.ok) {
-					console.error('Erro ao enviar contrato para API');
-					alert(
-						'O PDF foi gerado com sucesso, mas houve uma falha ao enviá-lo por e-mail/WhatsApp. Salve-o manualmente.',
-					);
-				} else {
-					const result = await response.json();
-					console.log('API Response:', result);
-				}
-			} catch (apiError) {
-				console.error('Erro de conexão com a API:', apiError);
-				alert(
-					'O PDF foi gerado, mas o servidor de envio (API) não foi encontrado.',
-				);
-			}
-
 			setIsSubmitted(true);
 		} catch (error) {
 			console.error('Erro ao gerar PDF:', error);
@@ -464,17 +600,13 @@ const Contracts: React.FC = () => {
 							Geração de Contrato
 						</h1>
 						<p className="text-slate-500 text-lg max-w-2xl mx-auto">
-							Preencha os dados, anexe seus documentos e assine
-							para gerar seu contrato completo.
+							Preencha os dados, anexe seus documentos e assine para gerar seu contrato completo.
 						</p>
 					</div>
 
 					<div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
 						<div className="p-8 md:p-10">
-							<form
-								onSubmit={handleSubmit}
-								className="space-y-10"
-							>
+							<form onSubmit={handleSubmit} className="space-y-10">
 								{/* Seção Empresa */}
 								<div>
 									<h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-2 mb-6 flex items-center gap-2">
@@ -494,10 +626,11 @@ const Contracts: React.FC = () => {
 												name="contratante"
 												value={formData.contratante}
 												onChange={handleChange}
-												className={inputClasses}
+												className={`${inputClasses} ${errors.contratante ? 'border-red-500 bg-red-50' : ''}`}
 												placeholder="Razão Social ou Nome Completo"
 												required
 											/>
+											{errors.contratante && <p className="text-xs text-red-500 mt-1">{errors.contratante}</p>}
 										</div>
 										<div>
 											<label className={labelClasses}>
@@ -508,25 +641,12 @@ const Contracts: React.FC = () => {
 												name="cpfCnpj"
 												value={formData.cpfCnpj}
 												onChange={handleChange}
-												className={inputClasses}
+												className={`${inputClasses} ${errors.cpfCnpj ? 'border-red-500 bg-red-50' : ''}`}
 												placeholder="00.000.000/0001-00"
 												maxLength={18}
 												required
 											/>
-										</div>
-										<div>
-											<label className={labelClasses}>
-												Endereço Completo
-											</label>
-											<input
-												type="text"
-												name="endereco"
-												value={formData.endereco}
-												onChange={handleChange}
-												className={inputClasses}
-												placeholder="Rua, Número, Bairro, Cidade - UF"
-												required
-											/>
+											{errors.cpfCnpj && <p className="text-xs text-red-500 mt-1">{errors.cpfCnpj}</p>}
 										</div>
 										<div>
 											<label className={labelClasses}>
@@ -537,13 +657,14 @@ const Contracts: React.FC = () => {
 												name="contato"
 												value={formData.contato}
 												onChange={handleChange}
-												className={inputClasses}
+												className={`${inputClasses} ${errors.contato ? 'border-red-500 bg-red-50' : ''}`}
 												placeholder="(00) 0 0000-0000"
 												maxLength={15}
 												required
 											/>
+											{errors.contato && <p className="text-xs text-red-500 mt-1">{errors.contato}</p>}
 										</div>
-										<div>
+										<div className="md:col-span-2">
 											<label className={labelClasses}>
 												E-mail
 											</label>
@@ -552,10 +673,130 @@ const Contracts: React.FC = () => {
 												name="email"
 												value={formData.email}
 												onChange={handleChange}
-												className={inputClasses}
+												className={`${inputClasses} ${errors.email ? 'border-red-500 bg-red-50' : ''}`}
 												placeholder="contato@empresa.com"
 												required
 											/>
+											{errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+										</div>
+									</div>
+								</div>
+
+								{/* Seção Endereço */}
+								<div>
+									<h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-2 mb-6 flex items-center gap-2">
+										<span className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 text-xs flex items-center justify-center">
+											2
+										</span>
+										Endereço
+									</h3>
+									<div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+										<div className="md:col-span-1">
+											<label className={labelClasses}>
+												CEP
+											</label>
+											<div className="relative">
+												<input
+													type="text"
+													name="cep"
+													value={formData.cep}
+													onChange={handleChange}
+													className={`${inputClasses} ${errors.cep ? 'border-red-500 bg-red-50' : ''} ${isFetchingCep ? 'pr-10' : ''}`}
+													placeholder="00000-000"
+													maxLength={9}
+													required
+												/>
+												{isFetchingCep && (
+													<div className="absolute right-3 top-1/2 -translate-y-1/2">
+														<Loader2 size={18} className="animate-spin text-primary-500" />
+													</div>
+												)}
+											</div>
+											{errors.cep && <p className="text-xs text-red-500 mt-1">{errors.cep}</p>}
+										</div>
+										<div className="md:col-span-3">
+											<label className={labelClasses}>Rua</label>
+											<input
+												type="text"
+												name="rua"
+												value={formData.rua}
+												onChange={handleChange}
+												className={`${inputClasses} ${errors.rua ? 'border-red-500 bg-red-50' : ''}`}
+												placeholder="Nome da Rua"
+												required
+											/>
+											{errors.rua && <p className="text-xs text-red-500 mt-1">{errors.rua}</p>}
+										</div>
+										
+										<div className="md:col-span-1">
+											<label className={labelClasses}>Número</label>
+											<div className="relative">
+												<input
+													type="text"
+													name="numero"
+													value={formData.numero}
+													onChange={handleChange}
+													disabled={formData.semNumero}
+													className={`${inputClasses} ${formData.semNumero ? 'bg-slate-100 cursor-not-allowed opacity-60' : ''} ${errors.numero ? 'border-red-500 bg-red-50' : ''} pr-16`}
+													placeholder={formData.semNumero ? "S/N" : "123"}
+													required={!formData.semNumero}
+												/>
+												<button
+													type="button"
+													onClick={() => handleValueChange('semNumero', !formData.semNumero)}
+													className={`absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg border font-bold text-[10px] transition-all ${
+														formData.semNumero 
+															? 'bg-primary-600 border-primary-600 text-white shadow-sm' 
+															: 'bg-white border-slate-200 text-slate-400 hover:border-primary-300 hover:text-primary-600'
+													}`}
+												>
+													S/N
+												</button>
+											</div>
+											{errors.numero && <p className="text-xs text-red-500 mt-1">{errors.numero}</p>}
+										</div>
+
+										<div className="md:col-span-1">
+											<label className={labelClasses}>Bairro</label>
+											<input
+												type="text"
+												name="bairro"
+												value={formData.bairro}
+												onChange={handleChange}
+												className={`${inputClasses} ${errors.bairro ? 'border-red-500 bg-red-50' : ''}`}
+												placeholder="Bairro"
+												required
+											/>
+											{errors.bairro && <p className="text-xs text-red-500 mt-1">{errors.bairro}</p>}
+										</div>
+
+										<div className="md:col-span-1">
+											<label className={labelClasses}>Cidade</label>
+											<input
+												type="text"
+												name="cidade"
+												value={formData.cidade}
+												onChange={handleChange}
+												className={`${inputClasses} ${errors.cidade ? 'border-red-500 bg-red-50' : ''}`}
+												placeholder="Cidade"
+												required
+											/>
+											{errors.cidade && <p className="text-xs text-red-500 mt-1">{errors.cidade}</p>}
+										</div>
+
+										<div className="md:col-span-1">
+											<label className={labelClasses}>UF</label>
+											<input
+												type="text"
+												name="uf"
+												value={formData.uf}
+												onChange={handleChange}
+												className={`${inputClasses} ${errors.uf ? 'border-red-500 bg-red-50' : ''}`}
+												placeholder="MG"
+												maxLength={2}
+												required
+											/>
+											{errors.uf && <p className="text-xs text-red-500 mt-1">{errors.uf}</p>}
 										</div>
 									</div>
 								</div>
@@ -564,7 +805,7 @@ const Contracts: React.FC = () => {
 								<div>
 									<h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-2 mb-6 flex items-center gap-2">
 										<span className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 text-xs flex items-center justify-center">
-											2
+											3
 										</span>
 										Dados do Negócio
 									</h3>
@@ -598,9 +839,10 @@ const Contracts: React.FC = () => {
 															''
 														}
 														onChange={handleChange}
-														className={inputClasses}
+														className={`${inputClasses} ${errors.dataInicio ? 'border-red-500 bg-red-50' : ''}`}
 														required
 													/>
+													{errors.dataInicio && <p className="text-xs text-red-500 mt-1">{errors.dataInicio}</p>}
 												</div>
 												<div>
 													<label
@@ -616,27 +858,21 @@ const Contracts: React.FC = () => {
 															''
 														}
 														onChange={handleChange}
-														className={inputClasses}
+														className={`${inputClasses} ${errors.dataFim ? 'border-red-500 bg-red-50' : ''}`}
 														required
 													/>
+													{errors.dataFim && <p className="text-xs text-red-500 mt-1">{errors.dataFim}</p>}
 												</div>
 												<div>
 													<SearchableSelect
 														label="Quantidade de Máquinas"
 														name="qtdeMaquinas"
-														value={
-															formData.qtdeMaquinas ||
-															''
-														}
+														value={formData.qtdeMaquinas || ''}
 														options={MAQUINAS}
 														placeholder="Selecione ou digite a quantidade"
-														onChange={
-															handleValueChange
-														}
+														onChange={handleValueChange}
 														required
-														error={
-															errors.qtdeMaquinas
-														}
+														error={errors.qtdeMaquinas}
 													/>
 												</div>
 											</>
@@ -648,19 +884,12 @@ const Contracts: React.FC = () => {
 													<SearchableSelect
 														label="Quantidade de Licenças"
 														name="qtdeLicencas"
-														value={
-															formData.qtdeLicencas ||
-															''
-														}
+														value={formData.qtdeLicencas || ''}
 														options={LICENCAS}
 														placeholder="Selecione ou digite a quantidade"
-														onChange={
-															handleValueChange
-														}
+														onChange={handleValueChange}
 														required
-														error={
-															errors.qtdeLicencas
-														}
+														error={errors.qtdeLicencas}
 													/>
 												</div>
 											)}
@@ -671,7 +900,7 @@ const Contracts: React.FC = () => {
 								<div>
 									<h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-2 mb-6 flex items-center gap-2">
 										<span className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 text-xs flex items-center justify-center">
-											3
+											4
 										</span>
 										Dados do Responsável
 									</h3>
@@ -685,10 +914,11 @@ const Contracts: React.FC = () => {
 												name="responsavel"
 												value={formData.responsavel}
 												onChange={handleChange}
-												className={inputClasses}
+												className={`${inputClasses} ${errors.responsavel ? 'border-red-500 bg-red-50' : ''}`}
 												placeholder="Nome Completo"
 												required
 											/>
+											{errors.responsavel && <p className="text-xs text-red-500 mt-1">{errors.responsavel}</p>}
 										</div>
 										<div>
 											<label className={labelClasses}>
@@ -699,20 +929,67 @@ const Contracts: React.FC = () => {
 												name="cpfResponsavel"
 												value={formData.cpfResponsavel}
 												onChange={handleChange}
-												className={inputClasses}
+												className={`${inputClasses} ${errors.cpfResponsavel ? 'border-red-500 bg-red-50' : ''}`}
 												placeholder="000.000.000-00"
 												maxLength={14}
 												required
+											/>
+											{errors.cpfResponsavel && <p className="text-xs text-red-500 mt-1">{errors.cpfResponsavel}</p>}
+										</div>
+									</div>
+								</div>
+
+								{/* Seção Resumo */}
+								<div>
+									<h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-2 mb-6 flex items-center gap-2">
+										<span className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 text-xs flex items-center justify-center">
+											5
+										</span>
+										Resumo do Contrato
+									</h3>
+									<div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 space-y-6">
+										<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+											<div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+												<p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Fidelidade</p>
+												<div className="flex items-center gap-2">
+													<input
+														type="checkbox"
+														checked={formData.semFidelidade}
+														onChange={(e) => handleValueChange('semFidelidade', e.target.checked)}
+														className="w-5 h-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+													/>
+													<span className="text-lg font-bold text-slate-900">Sem Fidelidade</span>
+												</div>
+											</div>
+											<div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+												<p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Valor da Adesão</p>
+												<p className="text-xl font-extrabold text-primary-600">R$ 250,00</p>
+											</div>
+											<div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+												<p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Valor Mensalidade</p>
+												<p className="text-xl font-extrabold text-primary-600">R$ 189,90</p>
+												<p className="text-[10px] text-slate-400 font-medium mt-1">* Conforme variação de licenças</p>
+											</div>
+										</div>
+
+										<div className="pt-4 border-t border-slate-200">
+											<SearchableSelect
+												label="Cupom de Desconto"
+												name="cupomDesconto"
+												value={formData.cupomDesconto}
+												options={CUPONS}
+												placeholder="Selecione ou digite o cupom"
+												onChange={handleValueChange}
 											/>
 										</div>
 									</div>
 								</div>
 
-								{/* Seção 4: Anexos (Documento e Foto) */}
+								{/* Seção 6: Anexos (Documento e Foto) */}
 								<div>
 									<h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-2 mb-6 flex items-center gap-2">
 										<span className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 text-xs flex items-center justify-center">
-											4
+											6
 										</span>
 										Anexos Obrigatórios
 									</h3>
@@ -720,128 +997,72 @@ const Contracts: React.FC = () => {
 										{/* Anexar Documento */}
 										<div className="space-y-0">
 											<div className="flex items-center justify-between h-10 mb-3">
-												<label className="block text-sm font-semibold text-slate-700">
-													Anexar Documento (RG/CNH)
-												</label>
-												{!attachedDocument &&
-													!isCameraOpen && (
-														<div className="flex bg-slate-100 p-1 rounded-lg">
-															<button
-																type="button"
-																onClick={() =>
-																	setDocCaptureMode(
-																		'upload',
-																	)
-																}
-																className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${docCaptureMode === 'upload' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-															>
-																Upload
-															</button>
-															<button
-																type="button"
-																onClick={() =>
-																	setDocCaptureMode(
-																		'camera',
-																	)
-																}
-																className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${docCaptureMode === 'camera' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-															>
-																Câmera
-															</button>
-														</div>
-													)}
-											</div>
-											<div
-												className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-2xl transition-all ${attachedDocument ? 'border-green-400 bg-green-50' : 'border-slate-200 bg-slate-50 hover:border-primary-400 hover:bg-white'}`}
-											>
-												{attachedDocument ? (
-													<div className="relative w-full h-full p-2">
-														<img
-															src={
-																attachedDocument
-															}
-															alt="Documento"
-															className="w-full h-full object-contain rounded-lg"
-														/>
+												<label className="block text-sm font-semibold text-slate-700">Anexar Documento (RG/CNH)</label>
+												{!attachedDocument && !isCameraOpen && (
+													<div className="flex bg-slate-100 p-1 rounded-lg">
 														<button
 															type="button"
-															onClick={() =>
-																setAttachedDocument(
-																	null,
-																)
-															}
+															onClick={() => setDocCaptureMode('upload')}
+															className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${docCaptureMode === 'upload' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+														>
+															Upload
+														</button>
+														<button
+															type="button"
+															onClick={() => setDocCaptureMode('camera')}
+															className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${docCaptureMode === 'camera' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+														>
+															Câmera
+														</button>
+													</div>
+												)}
+											</div>
+											<div className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-2xl transition-all ${attachedDocument ? 'border-green-400 bg-green-50' : 'border-slate-200 bg-slate-50 hover:border-primary-400 hover:bg-white'}`}>
+												{attachedDocument ? (
+													<div className="relative w-full h-full p-2">
+														<img src={attachedDocument} alt="Documento" className="w-full h-full object-contain rounded-lg" />
+														<button
+															type="button"
+															onClick={() => setAttachedDocument(null)}
 															className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors"
 														>
 															<Trash2 size={16} />
 														</button>
 													</div>
-												) : isCameraOpen &&
-												  docCaptureMode ===
-														'camera' ? (
+												) : isCameraOpen && docCaptureMode === 'camera' ? (
 													<div className="relative w-full h-full overflow-hidden rounded-2xl">
-														<video
-															ref={videoRef}
-															autoPlay
-															playsInline
-															className="w-full h-full object-cover"
-														/>
+														<video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
 														<div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
 															<button
 																type="button"
-																onClick={() =>
-																	takePhoto(
-																		'doc',
-																	)
-																}
+																onClick={() => takePhoto('doc')}
 																className="p-3 bg-primary-600 text-white rounded-full shadow-xl hover:bg-primary-700"
 															>
-																<Camera
-																	size={24}
-																/>
+																<Camera size={24} />
 															</button>
 															<button
 																type="button"
-																onClick={
-																	stopCamera
-																}
+																onClick={stopCamera}
 																className="p-3 bg-slate-800 text-white rounded-full shadow-xl hover:bg-slate-900"
 															>
-																<RotateCcw
-																	size={24}
-																/>
+																<RotateCcw size={24} />
 															</button>
 														</div>
 													</div>
-												) : docCaptureMode ===
-												  'camera' ? (
+												) : docCaptureMode === 'camera' ? (
 													<button
 														type="button"
-														onClick={() =>
-															startCamera('doc')
-														}
+														onClick={() => startCamera('doc')}
 														className="flex flex-col items-center justify-center w-full h-full cursor-pointer"
 													>
 														<Camera className="w-10 h-10 text-slate-400 mb-2" />
-														<span className="text-sm text-slate-500 font-medium">
-															Clique para abrir a
-															câmera
-														</span>
+														<span className="text-sm text-slate-500 font-medium">Clique para abrir a câmera</span>
 													</button>
 												) : (
 													<label className="flex flex-col items-center justify-center w-full h-full cursor-pointer">
 														<Upload className="w-10 h-10 text-slate-400 mb-2" />
-														<span className="text-sm text-slate-500 font-medium">
-															Clique para anexar
-															foto do documento
-														</span>
-														<input
-															type="file"
-															accept="image/*"
-															onChange={
-																handleDocumentUpload
-															}
-															className="hidden"
-														/>
+														<span className="text-sm text-slate-500 font-medium">Clique para anexar foto do documento</span>
+														<input type="file" accept="image/*" onChange={handleDocumentUpload} className="hidden" />
 													</label>
 												)}
 											</div>
@@ -850,123 +1071,78 @@ const Contracts: React.FC = () => {
 										{/* Tirar Foto */}
 										<div className="space-y-0">
 											<div className="flex items-center h-10 mb-3">
-												<label className="block text-sm font-semibold text-slate-700">
-													Tirar Foto do Rosto
-												</label>
+												<label className="block text-sm font-semibold text-slate-700">Tirar Foto do Rosto</label>
 											</div>
-											<div
-												className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-2xl transition-all ${capturedPhoto ? 'border-green-400 bg-green-50' : 'border-slate-200 bg-slate-50 hover:border-primary-400 hover:bg-white'}`}
-											>
+											<div className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-2xl transition-all ${capturedPhoto ? 'border-green-400 bg-green-50' : 'border-slate-200 bg-slate-50 hover:border-primary-400 hover:bg-white'}`}>
 												{capturedPhoto ? (
 													<div className="relative w-full h-full p-2">
-														<img
-															src={capturedPhoto}
-															alt="Foto"
-															className="w-full h-full object-contain rounded-lg"
-														/>
+														<img src={capturedPhoto} alt="Foto" className="w-full h-full object-contain rounded-lg" />
 														<button
 															type="button"
-															onClick={() =>
-																setCapturedPhoto(
-																	null,
-																)
-															}
+															onClick={() => setCapturedPhoto(null)}
 															className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors"
 														>
 															<Trash2 size={16} />
 														</button>
 													</div>
-												) : isCameraOpen &&
-												  docCaptureMode !==
-														'camera' ? (
+												) : isCameraOpen && docCaptureMode !== 'camera' ? (
 													<div className="relative w-full h-full overflow-hidden rounded-2xl">
-														<video
-															ref={videoRef}
-															autoPlay
-															playsInline
-															className="w-full h-full object-cover"
-														/>
+														<video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
 														<div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
 															<button
 																type="button"
-																onClick={() =>
-																	takePhoto(
-																		'face',
-																	)
-																}
+																onClick={() => takePhoto('face')}
 																className="p-3 bg-primary-600 text-white rounded-full shadow-xl hover:bg-primary-700"
 															>
-																<Camera
-																	size={24}
-																/>
+																<Camera size={24} />
 															</button>
 															<button
 																type="button"
-																onClick={
-																	stopCamera
-																}
+																onClick={stopCamera}
 																className="p-3 bg-slate-800 text-white rounded-full shadow-xl hover:bg-slate-900"
 															>
-																<RotateCcw
-																	size={24}
-																/>
+																<RotateCcw size={24} />
 															</button>
 														</div>
 													</div>
 												) : (
 													<button
 														type="button"
-														onClick={() =>
-															startCamera('face')
-														}
+														onClick={() => startCamera('face')}
 														className="flex flex-col items-center justify-center w-full h-full cursor-pointer"
 													>
 														<Camera className="w-10 h-10 text-slate-400 mb-2" />
-														<span className="text-sm text-slate-500 font-medium">
-															Clique para abrir a
-															câmera
-														</span>
+														<span className="text-sm text-slate-500 font-medium">Clique para abrir a câmera</span>
 													</button>
 												)}
-												{cameraError && (
-													<p className="text-xs text-red-500 mt-2 px-4 text-center">
-														{cameraError}
-													</p>
-												)}
+												{cameraError && <p className="text-xs text-red-500 mt-2 px-4 text-center">{cameraError}</p>}
 											</div>
 										</div>
 									</div>
 								</div>
 
-								{/* Seção 5: Assinatura Digital */}
+								{/* Seção 7: Assinatura Digital */}
 								<div>
 									<h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-2 mb-6 flex items-center gap-2">
 										<span className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 text-xs flex items-center justify-center">
-											5
+											7
 										</span>
 										Assinatura Digital
 									</h3>
 									<div className="space-y-4">
-										<p className="text-sm text-slate-500">
-											Utilize o mouse ou o dedo para
-											desenhar sua assinatura no quadro
-											abaixo:
-										</p>
-										<div className="border-2 border-slate-200 rounded-2xl bg-slate-50 overflow-hidden">
+										<p className="text-sm text-slate-500">Utilize o mouse ou o dedo para desenhar sua assinatura no quadro abaixo:</p>
+										<div ref={sigContainerRef} className="border-2 border-slate-200 rounded-2xl bg-slate-50 overflow-hidden h-48">
 											<SignatureCanvas
 												ref={sigCanvasRef}
 												penColor="black"
 												canvasProps={{
-													className:
-														'w-full h-48 cursor-crosshair',
+													className: 'w-full h-full cursor-crosshair',
 												}}
 											/>
 										</div>
 										<button
 											type="button"
-											onClick={() =>
-												sigCanvasRef.current?.clear()
-											}
+											onClick={() => sigCanvasRef.current?.clear()}
 											className="text-sm font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1"
 										>
 											<RotateCcw size={14} />
@@ -989,10 +1165,7 @@ const Contracts: React.FC = () => {
 										>
 											{isGenerating ? (
 												<>
-													<Loader2
-														size={20}
-														className="animate-spin"
-													/>
+													<Loader2 size={20} className="animate-spin" />
 													Gerando Contrato Completo...
 												</>
 											) : (
@@ -1007,20 +1180,10 @@ const Contracts: React.FC = () => {
 											{isSubmitted && (
 												<div className="p-6 bg-green-50 rounded-2xl border border-green-200 text-center">
 													<div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-														<CheckCircle
-															size={24}
-														/>
+														<CheckCircle size={24} />
 													</div>
-													<h4 className="text-lg font-bold text-green-900 mb-1">
-														Contrato enviado com
-														sucesso!
-													</h4>
-													<p className="text-green-700">
-														Nossa equipe recebeu seu
-														contrato e em breve
-														entrará em contato com
-														você.
-													</p>
+													<h4 className="text-lg font-bold text-green-900 mb-1">Contrato enviado com sucesso!</h4>
+													<p className="text-green-700">Nossa equipe recebeu seu contrato e em breve entrará em contato com você.</p>
 												</div>
 											)}
 											<div className="flex flex-col md:flex-row gap-4">
@@ -1030,21 +1193,16 @@ const Contracts: React.FC = () => {
 													className="flex-1 px-8 py-4 rounded-xl bg-green-600 text-white font-bold text-lg hover:bg-green-700 active:scale-95 transition-all shadow-lg shadow-green-500/25 flex items-center justify-center gap-2"
 												>
 													<FileDown size={20} />
-													Baixar Contrato Completo
-													(PDF)
+													Baixar Contrato Completo (PDF)
 												</a>
 												<button
 													type="button"
 													onClick={() => {
-														URL.revokeObjectURL(
-															pdfUrl,
-														);
+														URL.revokeObjectURL(pdfUrl);
 														setPdfUrl(null);
 														setIsSubmitted(false);
 														setCapturedPhoto(null);
-														setAttachedDocument(
-															null,
-														);
+														setAttachedDocument(null);
 														sigCanvasRef.current?.clear();
 													}}
 													className="px-8 py-4 rounded-xl bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition-colors"
@@ -1066,11 +1224,7 @@ const Contracts: React.FC = () => {
 										Informações Importantes
 									</h4>
 									<p className="text-sm text-slate-500 leading-relaxed">
-										O contrato gerado incluirá seus dados,
-										sua assinatura desenhada e os anexos
-										(documento e foto) em um único arquivo
-										PDF. Certifique-se de que as imagens
-										estejam nítidas.
+										O contrato gerado incluirá seus dados, sua assinatura desenhada e os anexos (documento e foto) em um único arquivo PDF. Certifique-se de que as imagens estejam nítidas.
 									</p>
 								</div>
 							</div>

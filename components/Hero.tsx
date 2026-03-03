@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { WHATSAPP_LINK } from '../constants';
 
 const Hero: React.FC = () => {
-	const heroVideoSrc = '/hero-video.mp4';
+	const heroVideoSrc = 'hero-video.mp4';
 
     const scrollToProducts = () => {
         const element = document.getElementById('products');
