@@ -14,6 +14,10 @@ import {
 	RotateCcw,
 	ChevronDown,
 	Search,
+	Maximize,
+	Minimize,
+	Smartphone,
+	Check,
 } from 'lucide-react';
 
 const SEGMENTOS = ['Evento', 'Bar', 'Restaurante', 'Loja', 'Hortifruti', 'Conveniência'];
@@ -224,32 +228,36 @@ const Contracts: React.FC = () => {
 	const sigCanvasRef = useRef<SignatureCanvas>(null);
 	const sigContainerRef = useRef<HTMLDivElement>(null);
 
-	// Ajustar tamanho do canvas de assinatura para evitar offset
+	// Ajustar tamanho do canvas de assinatura
 	const resizeCanvas = () => {
 		if (sigCanvasRef.current && sigContainerRef.current) {
 			const canvas = sigCanvasRef.current.getCanvas();
 			const container = sigContainerRef.current;
 			
+			const newWidth = container.offsetWidth;
+			const newHeight = container.offsetHeight;
+
+			if (newWidth === 0 || newHeight === 0) return;
+
 			// Salvar assinatura atual se houver
 			const isEmpty = sigCanvasRef.current.isEmpty();
-			const data = !isEmpty ? sigCanvasRef.current.toDataURL() : null;
+			const data = !isEmpty ? sigCanvasRef.current.toData() : null;
 			
-			// Ajustar dimensões internas para as dimensões de exibição
-			// Usamos offsetWidth/Height para pegar o tamanho real do elemento no DOM
-			canvas.width = container.offsetWidth;
-			canvas.height = container.offsetHeight;
+			// Ajustar dimensões internas
+			canvas.width = newWidth;
+			canvas.height = newHeight;
 			
-			// Limpar e restaurar assinatura se houver
-			sigCanvasRef.current.clear();
+			// Restaurar dados
 			if (data) {
-				sigCanvasRef.current.fromDataURL(data);
+				sigCanvasRef.current.fromData(data);
+			} else {
+				sigCanvasRef.current.clear();
 			}
 		}
 	};
 
 	React.useEffect(() => {
-		// Pequeno delay para garantir que o layout assentou e o container tem dimensões
-		const timer = setTimeout(resizeCanvas, 200);
+		const timer = setTimeout(resizeCanvas, 100);
 		window.addEventListener('resize', resizeCanvas);
 		return () => {
 			clearTimeout(timer);
@@ -1144,17 +1152,24 @@ const Contracts: React.FC = () => {
 										</span>
 										Assinatura Digital
 									</h3>
-									<div className="space-y-4">
+									<div className="space-y-4 relative">
 										<p className="text-sm text-slate-500">Utilize o mouse ou o dedo para desenhar sua assinatura no quadro abaixo:</p>
-										<div ref={sigContainerRef} className="border-2 border-slate-200 rounded-2xl bg-slate-50 overflow-hidden h-48">
-											<SignatureCanvas
-												ref={sigCanvasRef}
-												penColor="black"
-												canvasProps={{
-													className: 'w-full h-full cursor-crosshair',
-												}}
-											/>
+
+										<div
+											ref={sigContainerRef}
+											className="border-2 border-slate-200 rounded-2xl bg-slate-50 overflow-hidden h-48 relative"
+										>
+											<div className="flex-1 w-full h-full relative">
+												<SignatureCanvas
+													ref={sigCanvasRef}
+													penColor="black"
+													canvasProps={{
+														className: 'w-full h-full cursor-crosshair touch-none',
+													}}
+												/>
+											</div>
 										</div>
+
 										<button
 											type="button"
 											onClick={() => sigCanvasRef.current?.clear()}
