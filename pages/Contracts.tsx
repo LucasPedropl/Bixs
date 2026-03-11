@@ -598,7 +598,7 @@ const Contracts: React.FC = () => {
 					audio_url: "",
 					document_url: mediaUrl,
 					image_url: "",
-					instance_id: 77,
+					instance_id: 84,
 					message: `Novo contrato gerado e assinado!\n\n*Contratante:* ${data.contratante}\n*CNPJ/CPF:* ${data.cpfCnpj}\n*Segmento:* ${data.segmento}`,
 					to: "553172532104",
 					to_name: data.contratante,
