@@ -545,6 +545,76 @@ const Contracts: React.FC = () => {
 		return Object.keys(newErrors).length === 0;
 	};
 
+	const sendToWhatsApp = async (pdfBlob: Blob, data: FormData) => {
+		try {
+			// 1. Login
+			const loginResponse = await fetch('https://dev.bixs.com.br/v1/auth/login', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					email: 'pedrolucasmota2005@gmail.com',
+					password: 'M6433vlks*',
+					mac: 'docs',
+					source: 'api_externa',
+				}),
+			});
+
+			if (!loginResponse.ok) throw new Error('Falha no login da API Bixs');
+			const loginData = await loginResponse.json();
+			const token = loginData.token;
+
+			if (!token) throw new Error('Token não retornado');
+
+			// 2. Upload Media
+			const uploadFormData = new window.FormData();
+			uploadFormData.append('file', pdfBlob, `Contrato_BIXS_${data.contratante.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`);
+
+			const uploadResponse = await fetch('https://dev.bixs.com.br/v1/api/upload/media', {
+				method: 'POST',
+				headers: {
+					'Authorization': `Bearer ${token}`,
+					'accept': 'application/json',
+				},
+				body: uploadFormData,
+			});
+
+			if (!uploadResponse.ok) throw new Error('Falha no upload do contrato');
+			const uploadData = await uploadResponse.json();
+			const mediaUrl = uploadData.media_url;
+
+			if (!mediaUrl) throw new Error('URL da mídia não retornada');
+
+			// 3. Send Message
+			const messageResponse = await fetch('https://dev.bixs.com.br/v1/api/message/messages/send', {
+				method: 'POST',
+				headers: {
+					'Authorization': `Bearer ${token}`,
+					'Content-Type': 'application/json',
+					'accept': 'application/json',
+				},
+				body: JSON.stringify({
+					audio_url: "",
+					document_url: mediaUrl,
+					image_url: "",
+					instance_id: 77,
+					message: `Novo contrato gerado e assinado!\n\n*Contratante:* ${data.contratante}\n*CNPJ/CPF:* ${data.cpfCnpj}\n*Segmento:* ${data.segmento}`,
+					to: "553172532104",
+					to_name: data.contratante,
+					video_url: ""
+				}),
+			});
+
+			if (!messageResponse.ok) throw new Error('Falha ao enviar mensagem via WhatsApp');
+
+			console.log('Contrato enviado com sucesso para o WhatsApp!');
+		} catch (error) {
+			console.error('Erro ao enviar para o WhatsApp:', error);
+			alert('O contrato foi gerado, mas houve um erro ao enviar para o WhatsApp da empresa. ' + (error instanceof Error ? error.message : ''));
+		}
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
@@ -586,6 +656,10 @@ const Contracts: React.FC = () => {
 			).toBlob();
 			const url = URL.createObjectURL(blob);
 			setPdfUrl(url);
+			
+			// Enviar para o WhatsApp
+			await sendToWhatsApp(blob, formData);
+			
 			setIsSubmitted(true);
 		} catch (error) {
 			console.error('Erro ao gerar PDF:', error);
