@@ -21,9 +21,16 @@ import {
 } from 'lucide-react';
 
 const SEGMENTOS = ['Evento', 'Bar', 'Restaurante', 'Loja', 'Hortifruti', 'Conveniência'];
-const MAQUINAS = Array.from({ length: 31 }, (_, i) => i.toString());
+const MAQUINAS = Array.from({ length: 30 }, (_, i) => (i + 1).toString());
 const LICENCAS = Array.from({ length: 99 }, (_, i) => (i + 1).toString());
-const CUPONS = ['ADE30%W', 'ADE50Y', 'ADE70JZ', 'MEN2B', 'MEN3A'];
+
+const VALID_COUPONS: Record<string, { type: string; discount?: number; adesao?: number; mensalidade?: number; description: string }> = {
+	'ADE30%W': { type: 'adesao', discount: 0.3, description: '30% de desconto na adesão' },
+	'ADE50Y': { type: 'adesao', discount: 0.5, description: '50% de desconto na adesão' },
+	'ADE70JZ': { type: 'adesao', discount: 0.7, description: '70% de desconto na adesão' },
+	'MEN2B': { type: 'custom', adesao: 50, mensalidade: 179.90, description: 'Mensalidade R$ 179,90 e Adesão R$ 50,00' },
+	'MEN3A': { type: 'custom', adesao: 0, mensalidade: 169.90, description: 'Mensalidade R$ 169,90 e Adesão Grátis' }
+};
 
 const isValidCPF = (cpf: string) => {
 	cpf = cpf.replace(/[^\d]+/g, '');
@@ -438,7 +445,7 @@ const Contracts: React.FC = () => {
 			}
 
 			if (name === 'qtdeMaquinas' && typeof value === 'string') {
-				if (value && !MAQUINAS.includes(value)) newErrors.qtdeMaquinas = 'Quantidade inválida (0-30).';
+				if (value && !MAQUINAS.includes(value)) newErrors.qtdeMaquinas = 'Quantidade inválida (1-30).';
 				else delete newErrors.qtdeMaquinas;
 			}
 
@@ -725,6 +732,35 @@ const Contracts: React.FC = () => {
 	const inputClasses =
 		'w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none text-slate-700 placeholder:text-slate-400';
 	const labelClasses = 'block text-sm font-semibold text-slate-700 mb-2';
+
+	// Cálculos de valores com base no cupom
+	const baseAdesao = 250;
+	const baseMensalidade = 189.90;
+	
+	let finalAdesao = baseAdesao;
+	let finalMensalidade = baseMensalidade;
+	let economia = 0;
+	let cupomValido = false;
+	let mensagemCupom = '';
+
+	if (formData.cupomDesconto) {
+		const cupom = VALID_COUPONS[formData.cupomDesconto.toUpperCase()];
+		if (cupom) {
+			cupomValido = true;
+			if (cupom.type === 'adesao' && cupom.discount) {
+				const desconto = baseAdesao * cupom.discount;
+				finalAdesao = baseAdesao - desconto;
+				economia = desconto;
+			} else if (cupom.type === 'custom') {
+				economia = (baseAdesao - (cupom.adesao || 0)) + (baseMensalidade - (cupom.mensalidade || 0));
+				finalAdesao = cupom.adesao || 0;
+				finalMensalidade = cupom.mensalidade || 0;
+			}
+			mensagemCupom = `Cupom válido! Você economizou R$ ${economia.toFixed(2).replace('.', ',')}. Este é um cupom de uso único e não será mais válido para este usuário após a geração.`;
+		} else {
+			mensagemCupom = 'Cupom inválido ou expirado.';
+		}
+	}
 
 	return (
 		<div className="min-h-screen bg-slate-50 pt-28 pb-20">
@@ -1099,38 +1135,60 @@ const Contracts: React.FC = () => {
 									</h3>
 									<div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 space-y-6">
 										<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-											<div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
-												<p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Fidelidade</p>
-												<div className="flex items-center gap-2">
-													<input
-														type="checkbox"
-														checked={formData.semFidelidade}
-														onChange={(e) => handleValueChange('semFidelidade', e.target.checked)}
-														className="w-5 h-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
-													/>
-													<span className="text-lg font-bold text-slate-900">Sem Fidelidade</span>
+											<div className="p-4 bg-green-50 rounded-xl border border-green-200 shadow-sm relative overflow-hidden">
+												<div className="absolute -right-2 -top-2 w-16 h-16 bg-green-100 rounded-full opacity-50"></div>
+												<p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-1">Fidelidade</p>
+												<div className="flex items-center gap-2 relative z-10">
+													<div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white">
+														<Check size={14} strokeWidth={3} />
+													</div>
+													<span className="text-lg font-bold text-green-900">Sem Fidelidade</span>
 												</div>
 											</div>
 											<div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
 												<p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Valor da Adesão</p>
-												<p className="text-xl font-extrabold text-primary-600">R$ 250,00</p>
+												<div className="flex items-baseline gap-2">
+													<p className="text-xl font-extrabold text-primary-600">
+														R$ {finalAdesao.toFixed(2).replace('.', ',')}
+													</p>
+													{cupomValido && finalAdesao !== baseAdesao && (
+														<p className="text-sm text-slate-400 line-through">
+															R$ {baseAdesao.toFixed(2).replace('.', ',')}
+														</p>
+													)}
+												</div>
 											</div>
 											<div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
 												<p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Valor Mensalidade</p>
-												<p className="text-xl font-extrabold text-primary-600">R$ 189,90</p>
+												<div className="flex items-baseline gap-2">
+													<p className="text-xl font-extrabold text-primary-600">
+														R$ {finalMensalidade.toFixed(2).replace('.', ',')}
+													</p>
+													{cupomValido && finalMensalidade !== baseMensalidade && (
+														<p className="text-sm text-slate-400 line-through">
+															R$ {baseMensalidade.toFixed(2).replace('.', ',')}
+														</p>
+													)}
+												</div>
 												<p className="text-[10px] text-slate-400 font-medium mt-1">* Conforme variação de licenças</p>
 											</div>
 										</div>
 
 										<div className="pt-4 border-t border-slate-200">
-											<SearchableSelect
-												label="Cupom de Desconto"
+											<label className={labelClasses}>Cupom de Desconto</label>
+											<input
+												type="text"
 												name="cupomDesconto"
 												value={formData.cupomDesconto}
-												options={CUPONS}
-												placeholder="Selecione ou digite o cupom"
-												onChange={handleValueChange}
+												onChange={(e) => handleValueChange('cupomDesconto', e.target.value.toUpperCase())}
+												className={`${inputClasses} uppercase`}
+												placeholder="Digite seu cupom aqui"
 											/>
+											{formData.cupomDesconto && (
+												<p className={`text-sm font-medium mt-2 p-3 rounded-lg ${cupomValido ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
+													{mensagemCupom}
+												</p>
+											)}
 										</div>
 									</div>
 								</div>

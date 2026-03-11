@@ -352,6 +352,28 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 				</View>
 
 				<View style={styles.section}>
+					<Text style={styles.clauseTitle}>
+						Regras Gerais
+					</Text>
+					{isEvent ? (
+						<View style={{ marginLeft: 10 }}>
+							<Text style={styles.paragraph}>
+								• Período do Evento: {data.dataInicio ? new Date(data.dataInicio).toLocaleDateString('pt-BR') : ''} a {data.dataFim ? new Date(data.dataFim).toLocaleDateString('pt-BR') : ''}
+							</Text>
+							<Text style={styles.paragraph}>
+								• Quantidade de Máquinas: {data.qtdeMaquinas}
+							</Text>
+						</View>
+					) : (
+						<View style={{ marginLeft: 10 }}>
+							<Text style={styles.paragraph}>
+								• Quantidade de Licenças: {data.qtdeLicencas}
+							</Text>
+						</View>
+					)}
+				</View>
+
+				<View style={styles.section}>
 					<Text style={{ marginTop: 20, textAlign: 'center' }}>
 						Belo Horizonte,{' '}
 						{new Date().toLocaleDateString('pt-BR', {
