@@ -73,6 +73,24 @@ const isValidEmail = (email: string) => {
 	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 
+const isValidPhone = (phone: string) => {
+	const cleanPhone = phone.replace(/\D/g, '');
+	// Must be 10 or 11 digits
+	if (cleanPhone.length !== 10 && cleanPhone.length !== 11) return false;
+
+	// Valid DDDs in Brazil are from 11 to 99
+	const ddd = parseInt(cleanPhone.substring(0, 2));
+	if (ddd < 11 || ddd > 99) return false;
+
+	// If 11 digits, the 3rd digit must be 9
+	if (cleanPhone.length === 11 && cleanPhone.charAt(2) !== '9') return false;
+
+	// Avoid repeated sequences like 11999999999
+	if (/^(\d)\1+$/.test(cleanPhone)) return false;
+
+	return true;
+};
+
 interface SearchableSelectProps {
 	label: string;
 	name: string;
@@ -403,6 +421,11 @@ const Contracts: React.FC = () => {
 				else delete newErrors.email;
 			}
 
+			if (name === 'contato' && typeof value === 'string') {
+				if (value && !isValidPhone(value)) newErrors.contato = 'Número de telefone inválido.';
+				else delete newErrors.contato;
+			}
+
 			if (name === 'cpfResponsavel' && typeof value === 'string') {
 				const clean = value.replace(/\D/g, '');
 				if (clean.length > 0 && !isValidCPF(clean)) newErrors.cpfResponsavel = 'CPF inválido.';
@@ -513,7 +536,12 @@ const Contracts: React.FC = () => {
 		if (!formData.bairro) newErrors.bairro = 'Bairro é obrigatório.';
 		if (!formData.cidade) newErrors.cidade = 'Cidade é obrigatória.';
 		if (!formData.uf) newErrors.uf = 'UF é obrigatória.';
-		if (!formData.contato) newErrors.contato = 'Contato é obrigatório.';
+		
+		if (!formData.contato) {
+			newErrors.contato = 'Contato é obrigatório.';
+		} else if (!isValidPhone(formData.contato)) {
+			newErrors.contato = 'Número de telefone inválido. Informe um DDD válido e o número correto.';
+		}
 		
 		if (!formData.email) {
 			newErrors.email = 'E-mail é obrigatório.';
@@ -586,7 +614,7 @@ const Contracts: React.FC = () => {
 
 			if (!mediaUrl) throw new Error('URL da mídia não retornada');
 
-			// 3. Send Message
+			// 3. Send Message to Company
 			const messageResponse = await fetch('https://dev.bixs.com.br/v1/api/message/messages/send', {
 				method: 'POST',
 				headers: {
@@ -606,12 +634,37 @@ const Contracts: React.FC = () => {
 				}),
 			});
 
-			if (!messageResponse.ok) throw new Error('Falha ao enviar mensagem via WhatsApp');
+			if (!messageResponse.ok) throw new Error('Falha ao enviar mensagem para a empresa via WhatsApp');
 
-			console.log('Contrato enviado com sucesso para o WhatsApp!');
+			// 4. Send Message to Client
+			const cleanClientPhone = data.contato.replace(/\D/g, '');
+			const clientPhoneWithCountry = cleanClientPhone.startsWith('55') ? cleanClientPhone : `55${cleanClientPhone}`;
+
+			const clientMessageResponse = await fetch('https://dev.bixs.com.br/v1/api/message/messages/send', {
+				method: 'POST',
+				headers: {
+					'Authorization': `Bearer ${token}`,
+					'Content-Type': 'application/json',
+					'accept': 'application/json',
+				},
+				body: JSON.stringify({
+					audio_url: "",
+					document_url: mediaUrl,
+					image_url: "",
+					instance_id: 84,
+					message: "*Confirmação de Contrato – Empresa BIXs*\n\nA Empresa *BIXs* confirma o recebimento do contrato, juntamente com os dados do contratante e documentos apresentados, sendo estes cópias fiéis dos originais.\n\nPara prosseguir com a formalização, solicitamos a confirmação do envio respondendo conforme abaixo:\n*SIM* = Desejo Prosseguir com o contrato.",
+					to: clientPhoneWithCountry,
+					to_name: data.contratante,
+					video_url: ""
+				}),
+			});
+
+			if (!clientMessageResponse.ok) throw new Error('Falha ao enviar mensagem para o cliente via WhatsApp');
+
+			console.log('Contratos enviados com sucesso para o WhatsApp!');
 		} catch (error) {
 			console.error('Erro ao enviar para o WhatsApp:', error);
-			alert('O contrato foi gerado, mas houve um erro ao enviar para o WhatsApp da empresa. ' + (error instanceof Error ? error.message : ''));
+			alert('O contrato foi gerado, mas houve um erro ao enviar para o WhatsApp. ' + (error instanceof Error ? error.message : ''));
 		}
 	};
 
