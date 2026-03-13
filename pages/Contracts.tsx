@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { pdf } from '@react-pdf/renderer';
 import SignatureCanvas from 'react-signature-canvas';
 import ContractDocument from '../components/ContractDocument';
@@ -215,6 +216,7 @@ interface FormData {
 }
 
 const Contracts: React.FC = () => {
+	const navigate = useNavigate();
 	const [formData, setFormData] = useState<FormData>({
 		contratante: '',
 		cpfCnpj: '',
@@ -568,7 +570,8 @@ const Contracts: React.FC = () => {
 		if (!formData.segmento) newErrors.segmento = 'Segmento é obrigatório.';
 		else if (!SEGMENTOS.includes(formData.segmento)) newErrors.segmento = 'Selecione um segmento válido.';
 
-		if (formData.segmento === 'Evento') {
+		const isEvent = formData.segmento?.toLowerCase().includes('evento');
+		if (isEvent) {
 			if (!formData.dataInicio) newErrors.dataInicio = 'Data de início é obrigatória.';
 			if (!formData.dataFim) newErrors.dataFim = 'Data de fim é obrigatória.';
 			if (!formData.qtdeMaquinas) newErrors.qtdeMaquinas = 'Quantidade de máquinas é obrigatória.';
@@ -678,6 +681,11 @@ const Contracts: React.FC = () => {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
+		if (pricing.blockEvent) {
+			alert(pricing.eventBlockMessage);
+			return;
+		}
+
 		if (!validateForm()) {
 			alert('Por favor, preencha todos os campos obrigatórios corretamente.');
 			return;
@@ -708,6 +716,10 @@ const Contracts: React.FC = () => {
 				<ContractDocument
 					data={{
 						...formData,
+						baseAdesao: pricing.baseAdesao,
+						baseMensalidade: pricing.baseMensalidade,
+						finalAdesao: pricing.finalAdesao,
+						finalMensalidade: pricing.finalMensalidade,
 						signature: signatureDataUrl,
 						attachedDocument: attachedDocument || undefined,
 						capturedPhoto: capturedPhoto || undefined,
@@ -733,34 +745,99 @@ const Contracts: React.FC = () => {
 		'w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none text-slate-700 placeholder:text-slate-400';
 	const labelClasses = 'block text-sm font-semibold text-slate-700 mb-2';
 
-	// Cálculos de valores com base no cupom
-	const baseAdesao = 250;
-	const baseMensalidade = 189.90;
-	
-	let finalAdesao = baseAdesao;
-	let finalMensalidade = baseMensalidade;
-	let economia = 0;
-	let cupomValido = false;
-	let mensagemCupom = '';
+	const calculatePricing = () => {
+		let baseAdesao = 250;
+		let baseMensalidade = 189.90;
+		let blockEvent = false;
+		let eventBlockMessage = '';
 
-	if (formData.cupomDesconto) {
-		const cupom = VALID_COUPONS[formData.cupomDesconto.toUpperCase()];
-		if (cupom) {
-			cupomValido = true;
-			if (cupom.type === 'adesao' && cupom.discount) {
-				const desconto = baseAdesao * cupom.discount;
-				finalAdesao = baseAdesao - desconto;
-				economia = desconto;
-			} else if (cupom.type === 'custom') {
-				economia = (baseAdesao - (cupom.adesao || 0)) + (baseMensalidade - (cupom.mensalidade || 0));
-				finalAdesao = cupom.adesao || 0;
-				finalMensalidade = cupom.mensalidade || 0;
-			}
-			mensagemCupom = `Cupom válido! Você economizou R$ ${economia.toFixed(2).replace('.', ',')}. Este é um cupom de uso único e não será mais válido para este usuário após a geração.`;
+		const isEvent = formData.segmento?.toLowerCase().includes('evento');
+		const pdvs = isEvent ? parseInt(formData.qtdeMaquinas || '1') : parseInt(formData.qtdeLicencas || '1');
+
+		if (!isEvent) {
+			baseAdesao = 250;
+			if (pdvs <= 5) baseMensalidade = 189.90;
+			else if (pdvs === 6) baseMensalidade = 215.00;
+			else if (pdvs === 7) baseMensalidade = 230.00;
+			else if (pdvs === 8) baseMensalidade = 240.00;
+			else if (pdvs === 9) baseMensalidade = 248.00;
+			else if (pdvs === 10) baseMensalidade = 259.00;
+			else baseMensalidade = 259.00 + ((pdvs - 10) * 8);
 		} else {
-			mensagemCupom = 'Cupom inválido ou expirado.';
+			baseAdesao = 150;
+			let dif = 0;
+
+			if (formData.dataInicio && formData.dataFim) {
+				const [sy, sm, sd] = formData.dataInicio.split('-');
+				const [ey, em, ed] = formData.dataFim.split('-');
+				const start = new Date(Date.UTC(parseInt(sy), parseInt(sm) - 1, parseInt(sd)));
+				const end = new Date(Date.UTC(parseInt(ey), parseInt(em) - 1, parseInt(ed)));
+				const diffTime = end.getTime() - start.getTime();
+				const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+				if (days < 0) {
+					blockEvent = true;
+					eventBlockMessage = 'Data de fim não pode ser anterior à data de início.';
+				} else if (days <= 7) {
+					dif = 10;
+				} else if (days <= 15) {
+					dif = 200;
+				} else if (days <= 30) {
+					dif = 400;
+				} else {
+					blockEvent = true;
+					eventBlockMessage = 'Para eventos com mais de 30 dias, por favor, entre em contato com nosso time comercial pelo WhatsApp.';
+				}
+			}
+
+			let mensalidadeTabela = 190;
+			if (pdvs === 1 || pdvs === 2) mensalidadeTabela = 190;
+			else if (pdvs === 3) mensalidadeTabela = 250;
+			else if (pdvs === 4) mensalidadeTabela = 360;
+			else if (pdvs === 5) mensalidadeTabela = 420;
+			else if (pdvs === 6) mensalidadeTabela = 520;
+			else if (pdvs === 7) mensalidadeTabela = 618;
+			else if (pdvs === 8) mensalidadeTabela = 716;
+			else if (pdvs === 9) mensalidadeTabela = 815;
+			else if (pdvs === 10) mensalidadeTabela = 913;
+			else mensalidadeTabela = 913 + ((pdvs - 10) * 98);
+
+			baseMensalidade = mensalidadeTabela + dif;
 		}
-	}
+
+		let finalAdesao = baseAdesao;
+		let finalMensalidade = baseMensalidade;
+		let economia = 0;
+		let cupomValido = false;
+		let mensagemCupom = '';
+
+		if (formData.cupomDesconto) {
+			const cupom = VALID_COUPONS[formData.cupomDesconto.toUpperCase()];
+			if (cupom) {
+				if (isEvent && cupom.type !== 'adesao') {
+					mensagemCupom = 'Este cupom não é válido para o segmento de Eventos (apenas cupons de adesão são aceitos).';
+				} else {
+					cupomValido = true;
+					if (cupom.type === 'adesao' && cupom.discount) {
+						const desconto = baseAdesao * cupom.discount;
+						finalAdesao = baseAdesao - desconto;
+						economia = desconto;
+					} else if (cupom.type === 'custom') {
+						economia = (baseAdesao - (cupom.adesao || 0)) + (baseMensalidade - (cupom.mensalidade || 0));
+						finalAdesao = cupom.adesao || 0;
+						finalMensalidade = cupom.mensalidade || 0;
+					}
+					mensagemCupom = `Cupom válido! Você economizou R$ ${economia.toFixed(2).replace('.', ',')}. Este é um cupom de uso único e não será mais válido para este usuário após a geração.`;
+				}
+			} else {
+				mensagemCupom = 'Cupom inválido ou expirado.';
+			}
+		}
+
+		return { baseAdesao, baseMensalidade, finalAdesao, finalMensalidade, economia, cupomValido, mensagemCupom, blockEvent, eventBlockMessage };
+	};
+
+	const pricing = calculatePricing();
 
 	return (
 		<div className="min-h-screen bg-slate-50 pt-28 pb-20">
@@ -780,6 +857,21 @@ const Contracts: React.FC = () => {
 
 					<div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
 						<div className="p-8 md:p-10">
+							{pricing.blockEvent && (
+								<div className="p-4 mb-8 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+									<AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />
+									<div>
+										<h4 className="text-red-800 font-bold">Atenção</h4>
+										<p className="text-red-700 text-sm mt-1">{pricing.eventBlockMessage}</p>
+										{pricing.eventBlockMessage.includes('WhatsApp') && (
+											<a href="https://wa.me/553172532104" target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-sm font-bold text-red-700 underline">
+												Falar com o Comercial no WhatsApp
+											</a>
+										)}
+									</div>
+								</div>
+							)}
+
 							<form onSubmit={handleSubmit} className="space-y-10">
 								{/* Seção Empresa */}
 								<div>
@@ -1009,7 +1101,7 @@ const Contracts: React.FC = () => {
 											/>
 										</div>
 
-										{formData.segmento === 'Evento' && (
+										{formData.segmento?.toLowerCase().includes('evento') && (
 											<>
 												<div>
 													<label
@@ -1065,7 +1157,7 @@ const Contracts: React.FC = () => {
 										)}
 
 										{formData.segmento &&
-											formData.segmento !== 'Evento' && (
+											!formData.segmento.toLowerCase().includes('evento') && (
 												<div>
 													<SearchableSelect
 														label="Quantidade de Licenças"
@@ -1149,11 +1241,11 @@ const Contracts: React.FC = () => {
 												<p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Valor da Adesão</p>
 												<div className="flex items-baseline gap-2">
 													<p className="text-xl font-extrabold text-primary-600">
-														R$ {finalAdesao.toFixed(2).replace('.', ',')}
+														R$ {pricing.finalAdesao.toFixed(2).replace('.', ',')}
 													</p>
-													{cupomValido && finalAdesao !== baseAdesao && (
+													{pricing.cupomValido && pricing.finalAdesao !== pricing.baseAdesao && (
 														<p className="text-sm text-slate-400 line-through">
-															R$ {baseAdesao.toFixed(2).replace('.', ',')}
+															R$ {pricing.baseAdesao.toFixed(2).replace('.', ',')}
 														</p>
 													)}
 												</div>
@@ -1162,11 +1254,11 @@ const Contracts: React.FC = () => {
 												<p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Valor Mensalidade</p>
 												<div className="flex items-baseline gap-2">
 													<p className="text-xl font-extrabold text-primary-600">
-														R$ {finalMensalidade.toFixed(2).replace('.', ',')}
+														R$ {pricing.finalMensalidade.toFixed(2).replace('.', ',')}
 													</p>
-													{cupomValido && finalMensalidade !== baseMensalidade && (
+													{pricing.cupomValido && pricing.finalMensalidade !== pricing.baseMensalidade && (
 														<p className="text-sm text-slate-400 line-through">
-															R$ {baseMensalidade.toFixed(2).replace('.', ',')}
+															R$ {pricing.baseMensalidade.toFixed(2).replace('.', ',')}
 														</p>
 													)}
 												</div>
@@ -1185,8 +1277,8 @@ const Contracts: React.FC = () => {
 												placeholder="Digite seu cupom aqui"
 											/>
 											{formData.cupomDesconto && (
-												<p className={`text-sm font-medium mt-2 p-3 rounded-lg ${cupomValido ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
-													{mensagemCupom}
+												<p className={`text-sm font-medium mt-2 p-3 rounded-lg ${pricing.cupomValido ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
+													{pricing.mensagemCupom}
 												</p>
 											)}
 										</div>
@@ -1368,65 +1460,32 @@ const Contracts: React.FC = () => {
 
 								{/* Ações Finais */}
 								<div className="pt-8 border-t border-slate-100">
-									{!pdfUrl ? (
-										<button
-											type="submit"
-											disabled={isGenerating}
-											className={`w-full md:w-auto px-10 py-4 rounded-xl text-white font-bold text-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
-												isGenerating
-													? 'bg-slate-400 cursor-not-allowed'
-													: 'bg-primary-600 hover:bg-primary-700 active:scale-95 shadow-primary-500/25'
-											}`}
-										>
-											{isGenerating ? (
-												<>
-													<Loader2 size={20} className="animate-spin" />
-													Gerando Contrato Completo...
-												</>
-											) : (
-												<>
-													<CheckCircle size={20} />
-													Gerar Contrato Completo
-												</>
-											)}
-										</button>
-									) : (
-										<div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-											{isSubmitted && (
-												<div className="p-6 bg-green-50 rounded-2xl border border-green-200 text-center">
-													<div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-														<CheckCircle size={24} />
-													</div>
-													<h4 className="text-lg font-bold text-green-900 mb-1">Contrato enviado com sucesso!</h4>
-													<p className="text-green-700">Nossa equipe recebeu seu contrato e em breve entrará em contato com você.</p>
-												</div>
-											)}
-											<div className="flex flex-col md:flex-row gap-4">
-												<a
-													href={pdfUrl}
-													download={`Contrato_BIXS_${formData.contratante.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`}
-													className="flex-1 px-8 py-4 rounded-xl bg-green-600 text-white font-bold text-lg hover:bg-green-700 active:scale-95 transition-all shadow-lg shadow-green-500/25 flex items-center justify-center gap-2"
-												>
-													<FileDown size={20} />
-													Baixar Contrato Completo (PDF)
-												</a>
-												<button
-													type="button"
-													onClick={() => {
-														URL.revokeObjectURL(pdfUrl);
-														setPdfUrl(null);
-														setIsSubmitted(false);
-														setCapturedPhoto(null);
-														setAttachedDocument(null);
-														sigCanvasRef.current?.clear();
-													}}
-													className="px-8 py-4 rounded-xl bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition-colors"
-												>
-													Gerar Novo
-												</button>
-											</div>
-										</div>
-									)}
+									<button
+										type="submit"
+										disabled={isGenerating || pricing.blockEvent || !!pdfUrl}
+										className={`w-full md:w-auto px-10 py-4 rounded-xl text-white font-bold text-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
+											isGenerating || pricing.blockEvent || !!pdfUrl
+												? 'bg-slate-400 cursor-not-allowed'
+												: 'bg-primary-600 hover:bg-primary-700 active:scale-95 shadow-primary-500/25'
+										}`}
+									>
+										{isGenerating ? (
+											<>
+												<Loader2 size={20} className="animate-spin" />
+												Gerando Contrato Completo...
+											</>
+										) : pdfUrl ? (
+											<>
+												<CheckCircle size={20} />
+												Contrato Gerado
+											</>
+										) : (
+											<>
+												<CheckCircle size={20} />
+												Gerar Contrato Completo
+											</>
+										)}
+									</button>
 								</div>
 							</form>
 						</div>
@@ -1449,6 +1508,41 @@ const Contracts: React.FC = () => {
 			</div>
 			{/* Canvas oculto para captura de foto */}
 			<canvas ref={canvasRef} className="hidden" />
+
+			{/* Modal de Sucesso */}
+			{pdfUrl && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+					<div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-in zoom-in-95 fade-in duration-200">
+						<div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+							<CheckCircle size={32} />
+						</div>
+						<h3 className="text-2xl font-bold text-slate-900 text-center mb-2">Contrato Gerado com Sucesso!</h3>
+						<p className="text-slate-600 text-center mb-8">
+							Nossa equipe recebeu seu contrato e em breve entrará em contato com você.
+						</p>
+						<div className="space-y-3">
+							<a
+								href={pdfUrl}
+								download={`Contrato_BIXS_${formData.contratante.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`}
+								className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-primary-600 text-white font-bold hover:bg-primary-700 transition-colors"
+							>
+								<FileDown size={20} />
+								Baixar Contrato
+							</a>
+							<button
+								onClick={() => {
+									URL.revokeObjectURL(pdfUrl);
+									setPdfUrl(null);
+									navigate('/');
+								}}
+								className="w-full px-6 py-4 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition-colors"
+							>
+								Fechar e Voltar ao Início
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };

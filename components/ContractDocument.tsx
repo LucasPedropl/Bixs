@@ -140,6 +140,10 @@ interface ContractData {
 	qtdeLicencas?: string;
 	cupomDesconto?: string;
 	semFidelidade?: boolean;
+	baseAdesao?: number;
+	baseMensalidade?: number;
+	finalAdesao?: number;
+	finalMensalidade?: number;
 	// Novos campos para assinatura e anexos
 	signature?: string; // Data URL
 	attachedDocument?: string; // Data URL
@@ -151,7 +155,7 @@ interface ContractDocumentProps {
 }
 
 const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
-	const isEvent = data.segmento === 'Evento';
+	const isEvent = data.segmento?.toLowerCase().includes('evento');
 
 	return (
 		<Document>
@@ -160,7 +164,7 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 				<View style={styles.header} fixed>
 					<Image
 						style={styles.headerLogo}
-						src="/logo-bix-automacao.png"
+						src={typeof window !== 'undefined' ? `${window.location.origin}/logo-bix-automacao.png` : '/logo-bix-automacao.png'}
 					/>
 					<Image
 						style={styles.headerLogo}
@@ -295,10 +299,6 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 						contratada correspondem aos pontos:
 					</Text>
 					<View style={{ marginLeft: 10 }}>
-						<Text>
-							• Ativação e Configuração do Sistema Gerencial: R$
-							150,00;
-						</Text>
 						{!isEvent && data.qtdeLicencas && (
 							<Text>
 								• Número de licença ativa: ({data.qtdeLicencas})
@@ -311,7 +311,8 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 								fontFamily: 'Helvetica-Bold',
 							}}
 						>
-							Adesão UAI PDV Mais: R$ 250,00
+							Adesão UAI PDV Mais: R$ {data.finalAdesao !== undefined ? data.finalAdesao.toFixed(2).replace('.', ',') : '250,00'}
+							{data.baseAdesao && data.finalAdesao !== data.baseAdesao ? ` (De R$ ${data.baseAdesao.toFixed(2).replace('.', ',')})` : ''}
 						</Text>
 						<Text
 							style={{
@@ -319,7 +320,8 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 								fontFamily: 'Helvetica-Bold',
 							}}
 						>
-							Valor da Mensalidade: R$ 189,90 (Conforme variação de licenças)
+							Valor da Mensalidade: R$ {data.finalMensalidade !== undefined ? data.finalMensalidade.toFixed(2).replace('.', ',') : '189,90'} (Conforme variação de licenças)
+							{data.baseMensalidade && data.finalMensalidade !== data.baseMensalidade ? ` (De R$ ${data.baseMensalidade.toFixed(2).replace('.', ',')})` : ''}
 						</Text>
 						{data.cupomDesconto && (
 							<Text style={{ marginTop: 2, color: '#059669' }}>
@@ -358,7 +360,7 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 					{isEvent ? (
 						<View style={{ marginLeft: 10 }}>
 							<Text style={styles.paragraph}>
-								• Período do Evento: {data.dataInicio ? new Date(data.dataInicio).toLocaleDateString('pt-BR') : ''} a {data.dataFim ? new Date(data.dataFim).toLocaleDateString('pt-BR') : ''}
+								• Período do Evento: {data.dataInicio ? data.dataInicio.split('-').reverse().join('/') : ''} a {data.dataFim ? data.dataFim.split('-').reverse().join('/') : ''}
 							</Text>
 							<Text style={styles.paragraph}>
 								• Quantidade de Máquinas: {data.qtdeMaquinas}
