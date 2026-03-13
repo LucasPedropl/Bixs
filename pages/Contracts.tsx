@@ -409,8 +409,9 @@ const Contracts: React.FC = () => {
 		setErrors((prev) => {
 			const newErrors = { ...prev };
 
-			if (name === 'contratante') {
+			if (name === 'contratante' && typeof value === 'string') {
 				if (!value) newErrors.contratante = 'Nome da contratante é obrigatório.';
+				else if (value.trim().split(/\s+/).length < 2) newErrors.contratante = 'Informe o nome completo ou razão social.';
 				else delete newErrors.contratante;
 			}
 
@@ -435,6 +436,12 @@ const Contracts: React.FC = () => {
 				else delete newErrors.contato;
 			}
 
+			if (name === 'responsavel' && typeof value === 'string') {
+				if (!value) newErrors.responsavel = 'Nome do responsável é obrigatório.';
+				else if (value.trim().split(/\s+/).length < 2) newErrors.responsavel = 'Informe o nome completo do responsável.';
+				else delete newErrors.responsavel;
+			}
+
 			if (name === 'cpfResponsavel' && typeof value === 'string') {
 				const clean = value.replace(/\D/g, '');
 				if (clean.length > 0 && !isValidCPF(clean)) newErrors.cpfResponsavel = 'CPF inválido.';
@@ -454,6 +461,39 @@ const Contracts: React.FC = () => {
 			if (name === 'qtdeLicencas' && typeof value === 'string') {
 				if (value && !LICENCAS.includes(value)) newErrors.qtdeLicencas = 'Quantidade inválida (1-99).';
 				else delete newErrors.qtdeLicencas;
+			}
+
+			if (name === 'dataInicio' || name === 'dataFim') {
+				const isEvent = formData.segmento?.toLowerCase().includes('evento');
+				if (isEvent) {
+					const dataInicio = name === 'dataInicio' ? (value as string) : formData.dataInicio;
+					const dataFim = name === 'dataFim' ? (value as string) : formData.dataFim;
+					
+					if (dataFim) {
+						const today = new Date();
+						today.setHours(0, 0, 0, 0);
+						const [ey, em, ed] = dataFim.split('-').map(Number);
+						const normalizedEndDate = new Date(ey, em - 1, ed);
+						
+						if (normalizedEndDate < today) {
+							newErrors.dataFim = 'A data de fim não pode ser anterior a hoje.';
+						} else if (dataInicio) {
+							const [sy, sm, sd] = dataInicio.split('-').map(Number);
+							const normalizedStartDate = new Date(sy, sm - 1, sd);
+							if (normalizedEndDate < normalizedStartDate) {
+								newErrors.dataFim = 'A data de fim não pode ser anterior à data de início.';
+							} else {
+								delete newErrors.dataFim;
+							}
+						} else {
+							delete newErrors.dataFim;
+						}
+					}
+					
+					if (name === 'dataInicio' && value) {
+						delete newErrors.dataInicio;
+					}
+				}
 			}
 
 			return newErrors;
@@ -528,7 +568,11 @@ const Contracts: React.FC = () => {
 	const validateForm = () => {
 		const newErrors: Record<string, string> = {};
 
-		if (!formData.contratante) newErrors.contratante = 'Nome da contratante é obrigatório.';
+		if (!formData.contratante) {
+			newErrors.contratante = 'Nome da contratante é obrigatório.';
+		} else if (formData.contratante.trim().split(/\s+/).length < 2) {
+			newErrors.contratante = 'Informe o nome completo ou razão social completa.';
+		}
 		
 		const cleanCpfCnpj = formData.cpfCnpj.replace(/\D/g, '');
 		if (!cleanCpfCnpj) {
@@ -539,7 +583,13 @@ const Contracts: React.FC = () => {
 			if (!isValidCNPJ(cleanCpfCnpj)) newErrors.cpfCnpj = 'CNPJ inválido.';
 		}
 
-		if (!formData.cep) newErrors.cep = 'CEP é obrigatório.';
+		const cleanCep = formData.cep.replace(/\D/g, '');
+		if (!cleanCep) {
+			newErrors.cep = 'CEP é obrigatório.';
+		} else if (cleanCep.length !== 8) {
+			newErrors.cep = 'CEP deve conter 8 dígitos.';
+		}
+
 		if (!formData.rua) newErrors.rua = 'Rua é obrigatória.';
 		if (!formData.numero && !formData.semNumero) newErrors.numero = 'Número é obrigatório.';
 		if (!formData.bairro) newErrors.bairro = 'Bairro é obrigatório.';
@@ -558,7 +608,11 @@ const Contracts: React.FC = () => {
 			newErrors.email = 'E-mail inválido.';
 		}
 
-		if (!formData.responsavel) newErrors.responsavel = 'Nome do responsável é obrigatório.';
+		if (!formData.responsavel) {
+			newErrors.responsavel = 'Nome do responsável é obrigatório.';
+		} else if (formData.responsavel.trim().split(/\s+/).length < 2) {
+			newErrors.responsavel = 'Informe o nome completo do responsável.';
+		}
 		
 		const cleanCpfResp = formData.cpfResponsavel.replace(/\D/g, '');
 		if (!cleanCpfResp) {
@@ -572,8 +626,33 @@ const Contracts: React.FC = () => {
 
 		const isEvent = formData.segmento?.toLowerCase().includes('evento');
 		if (isEvent) {
-			if (!formData.dataInicio) newErrors.dataInicio = 'Data de início é obrigatória.';
-			if (!formData.dataFim) newErrors.dataFim = 'Data de fim é obrigatória.';
+			if (!formData.dataInicio) {
+				newErrors.dataInicio = 'Data de início é obrigatória.';
+			}
+			
+			if (!formData.dataFim) {
+				newErrors.dataFim = 'Data de fim é obrigatória.';
+			} else {
+				const today = new Date();
+				today.setHours(0, 0, 0, 0);
+				
+				const [endYear, endMonth, endDay] = formData.dataFim.split('-').map(Number);
+				const normalizedEndDate = new Date(endYear, endMonth - 1, endDay);
+
+				if (normalizedEndDate < today) {
+					newErrors.dataFim = 'A data de fim não pode ser anterior a hoje.';
+				}
+
+				if (formData.dataInicio) {
+					const [startYear, startMonth, startDay] = formData.dataInicio.split('-').map(Number);
+					const normalizedStartDate = new Date(startYear, startMonth - 1, startDay);
+					
+					if (normalizedEndDate < normalizedStartDate) {
+						newErrors.dataFim = 'A data de fim não pode ser anterior à data de início.';
+					}
+				}
+			}
+			
 			if (!formData.qtdeMaquinas) newErrors.qtdeMaquinas = 'Quantidade de máquinas é obrigatória.';
 		} else if (formData.segmento) {
 			if (!formData.qtdeLicencas) newErrors.qtdeLicencas = 'Quantidade de licenças é obrigatória.';
@@ -1131,6 +1210,7 @@ const Contracts: React.FC = () => {
 													<input
 														type="date"
 														name="dataFim"
+														min={formData.dataInicio || new Date().toISOString().split('T')[0]}
 														value={
 															formData.dataFim ||
 															''
