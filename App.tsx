@@ -4,7 +4,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Contracts from './pages/Contracts';
-import WhatsappConnect from './pages/WhatsappConnect';
+import WhatsappConnect from './pages/WhatsappConnect'; // Descomente para ativar a tela de WhatsApp
 
 const App: React.FC = () => {
 	return (
@@ -15,7 +15,11 @@ const App: React.FC = () => {
 					<Routes>
 						<Route path="/" element={<Home />} />
 						<Route path="/contratos" element={<Contracts />} />
-						<Route path="/whatsapp" element={<WhatsappConnect />} />
+						<Route
+							path="/whatsapp"
+							element={<WhatsappConnect />}
+						/>{' '}
+						{/* Descomente para ativar a tela de WhatsApp */}
 					</Routes>
 				</main>
 				<Footer />
