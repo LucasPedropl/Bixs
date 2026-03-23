@@ -703,6 +703,21 @@ const Contracts: React.FC = () => {
 
 			if (!mediaUrl) throw new Error('URL da mídia não retornada');
 
+			// 2.5 Buscar Instância Ativa
+			const instancesResponse = await fetch('https://dev.bixs.com.br/v1/api/message/instances', {
+				headers: {
+					'Authorization': `Bearer ${token}`,
+					'accept': 'application/json',
+				},
+			});
+			if (!instancesResponse.ok) throw new Error('Falha ao buscar instâncias');
+			const instancesData = await instancesResponse.json();
+			if (!instancesData || instancesData.length === 0) {
+				throw new Error('Nenhuma instância do WhatsApp encontrada. Por favor, conecte primeiro.');
+			}
+			// Pega a primeira instância (ou pode colocar lógica para verificar status)
+			const activeInstanceId = instancesData[0].id;
+
 			// 3. Send Message to Company
 			const messageResponse = await fetch('https://dev.bixs.com.br/v1/api/message/messages/send', {
 				method: 'POST',
@@ -715,7 +730,7 @@ const Contracts: React.FC = () => {
 					audio_url: "",
 					document_url: mediaUrl,
 					image_url: "",
-					instance_id: 84,
+					instance_id: activeInstanceId,
 					message: `Novo contrato gerado e assinado!\n\n*Contratante:* ${data.contratante}\n*CNPJ/CPF:* ${data.cpfCnpj}\n*Segmento:* ${data.segmento}`,
 					to: "553172532104",
 					to_name: data.contratante,
@@ -740,7 +755,7 @@ const Contracts: React.FC = () => {
 					audio_url: "",
 					document_url: mediaUrl,
 					image_url: "",
-					instance_id: 84,
+					instance_id: activeInstanceId,
 					message: "*Confirmação de Contrato – Empresa BIXs*\n\nA Empresa *BIXs* confirma o recebimento do contrato, juntamente com os dados do contratante e documentos apresentados, sendo estes cópias fiéis dos originais.\n\nPara prosseguir com a formalização, solicitamos a confirmação do envio respondendo conforme abaixo:\n*SIM* = Desejo Prosseguir com o contrato.",
 					to: clientPhoneWithCountry,
 					to_name: data.contratante,
@@ -1613,6 +1628,7 @@ const Contracts: React.FC = () => {
 								onClick={() => {
 									URL.revokeObjectURL(pdfUrl);
 									setPdfUrl(null);
+									window.scrollTo(0, 0);
 									navigate('/');
 								}}
 								className="w-full px-6 py-4 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition-colors"

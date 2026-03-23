@@ -31,8 +31,6 @@ const WhatsappConnect: React.FC = () => {
 	const [connectionStatus, setConnectionStatus] = useState<string>('');
 	const [isLoading, setIsLoading] = useState(false);
 
-	const refreshCount = useRef(0);
-	const timerRef = useRef<NodeJS.Timeout | null>(null);
 	const activeRef = useRef(true);
 
 	const deleteInstance = async (authToken: string, id: number) => {
@@ -59,6 +57,7 @@ const WhatsappConnect: React.FC = () => {
 		if (!activeRef.current) return;
 
 		try {
+			setIsLoading(true);
 			// 1. Check Status
 			const statusRes = await fetch(`${BASE_URL}/${id}/status`, {
 				headers: {
@@ -74,28 +73,20 @@ const WhatsappConnect: React.FC = () => {
 				if (activeRef.current) setConnectionStatus(currentStatus);
 			}
 
+			const isConnected =
+				currentStatus &&
+				(currentStatus.toUpperCase() === 'OPEN' ||
+					currentStatus.toUpperCase() === 'CONNECTED');
+
 			// Se conectado, para a busca de qrcode
-			if (currentStatus && currentStatus.toUpperCase() === 'OPEN') {
+			if (isConnected) {
 				setStatusMsg('Instância conectada!');
 				setQrCodeData(null); // retira imagem de qrcode
-				if (timerRef.current) clearInterval(timerRef.current);
 				return;
 			}
 
-			// 2. Timeout/Apagar por inatividade
-			if (refreshCount.current >= 4) {
-				setStatusMsg(
-					'Limite de tempo excedido. A instância será excluída (160s sem conectar).',
-				);
-				if (timerRef.current) clearInterval(timerRef.current);
-				await deleteInstance(authToken, id);
-				return;
-			}
-
-			// 3. Gerar QrCode
-			setStatusMsg(
-				`Rotacionando QRCode (Tentativa ${refreshCount.current + 1}/4)...`,
-			);
+			// 2. Gerar QrCode
+			setStatusMsg(`Gerando QRCode...`);
 			const qrRes = await fetch(`${BASE_URL}/${id}/qrcode`, {
 				headers: {
 					accept: 'application/json',
@@ -103,8 +94,9 @@ const WhatsappConnect: React.FC = () => {
 				},
 			});
 
-			if (!qrRes.ok)
+			if (!qrRes.ok) {
 				throw new Error('Falha ao obter dados do QRCode da instância');
+			}
 
 			const qrData = await qrRes.json();
 			const rawCode =
@@ -117,12 +109,20 @@ const WhatsappConnect: React.FC = () => {
 
 			if (activeRef.current) {
 				setQrCodeData(rawCode);
-				setStatusMsg(`QRCode atualizado! Escaneie em até 40 segundos.`);
-				refreshCount.current += 1;
+				setStatusMsg(`QRCode pronto! Escaneie com o seu WhatsApp.`);
 			}
 		} catch (err: any) {
 			console.error(err);
-			if (activeRef.current) setStatusMsg(`Erro QRCode: ${err.message}`);
+			if (activeRef.current) {
+				setStatusMsg(`Erro no QRCode. Criando nova instância...`);
+				// Cria nova instância por causa do erro no qrcode
+				if (instanceId) {
+					await deleteInstance(authToken, instanceId);
+				}
+				setupWhatsapp(true);
+			}
+		} finally {
+			setIsLoading(false);
 		}
 	};
 
@@ -194,15 +194,8 @@ const WhatsappConnect: React.FC = () => {
 				throw new Error('ID da instância não encontrado');
 			if (activeRef.current) setInstanceId(targetId);
 
-			// --- 3. Carregar Status e QRCode inicial e setar intervalo ---
-			refreshCount.current = 0;
-			if (timerRef.current) clearInterval(timerRef.current);
-
+			// --- 3. Carregar Status e QRCode inicial ---
 			await checkStatusAndLoadQrCode(authToken, targetId);
-
-			timerRef.current = setInterval(() => {
-				checkStatusAndLoadQrCode(authToken, targetId!);
-			}, 40000); // Roda a cada 40 segundos
 		} catch (err: any) {
 			console.error(err);
 			if (activeRef.current) setStatusMsg(`Erro: ${err.message}`);
@@ -216,12 +209,16 @@ const WhatsappConnect: React.FC = () => {
 		setupWhatsapp();
 		return () => {
 			activeRef.current = false;
-			if (timerRef.current) clearInterval(timerRef.current);
 		};
 	}, []);
 
+	const handleGenerateQrCode = () => {
+		if (token && instanceId) {
+			checkStatusAndLoadQrCode(token, instanceId);
+		}
+	};
+
 	const handleForceNewInstance = async () => {
-		if (timerRef.current) clearInterval(timerRef.current);
 		if (token && instanceId) {
 			await deleteInstance(token, instanceId);
 		}
@@ -243,7 +240,9 @@ const WhatsappConnect: React.FC = () => {
 								className="text-sm font-bold mt-1 uppercase"
 								style={{
 									color:
-										connectionStatus === 'OPEN'
+										connectionStatus === 'OPEN' ||
+										connectionStatus.toUpperCase() ===
+											'CONNECTED'
 											? 'green'
 											: '#d97706',
 								}}
@@ -254,7 +253,9 @@ const WhatsappConnect: React.FC = () => {
 					</div>
 				)}
 
-				{qrCodeData && connectionStatus?.toUpperCase() !== 'OPEN' ? (
+				{qrCodeData &&
+				connectionStatus?.toUpperCase() !== 'OPEN' &&
+				connectionStatus?.toUpperCase() !== 'CONNECTED' ? (
 					<div className="flex flex-col items-center">
 						<img
 							src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeData)}`}
@@ -265,7 +266,8 @@ const WhatsappConnect: React.FC = () => {
 							Escaneie o QRCode acima com o seu WhatsApp.
 						</p>
 					</div>
-				) : connectionStatus?.toUpperCase() === 'OPEN' ? (
+				) : connectionStatus?.toUpperCase() === 'OPEN' ||
+				  connectionStatus?.toUpperCase() === 'CONNECTED' ? (
 					<div className="flex flex-col items-center justify-center h-[250px] w-[250px] bg-green-50 rounded-lg border border-green-200 mb-4">
 						<svg
 							className="w-16 h-16 text-green-500 mb-2"
@@ -297,13 +299,32 @@ const WhatsappConnect: React.FC = () => {
 				{statusMsg}
 			</p>
 
-			<button
-				onClick={handleForceNewInstance}
-				disabled={isLoading}
-				className="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-			>
-				{isLoading ? 'Processando...' : 'Criar Nova Instância'}
-			</button>
+			<div className="flex gap-4">
+				{connectionStatus?.toUpperCase() !== 'OPEN' &&
+					connectionStatus?.toUpperCase() !== 'CONNECTED' && (
+						<>
+							<button
+								onClick={handleGenerateQrCode}
+								disabled={isLoading || !instanceId}
+								className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								{isLoading
+									? 'Processando...'
+									: 'Gerar/Atualizar QRCode'}
+							</button>
+
+							<button
+								onClick={handleForceNewInstance}
+								disabled={isLoading}
+								className="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								{isLoading
+									? 'Processando...'
+									: 'Criar Nova Instância'}
+							</button>
+						</>
+					)}
+			</div>
 		</div>
 	);
 };
