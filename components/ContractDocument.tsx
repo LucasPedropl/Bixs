@@ -6,6 +6,7 @@ import {
 	Document,
 	StyleSheet,
 	Image,
+	Link,
 } from '@react-pdf/renderer';
 
 const styles = StyleSheet.create({
@@ -105,15 +106,15 @@ const styles = StyleSheet.create({
 	},
 	footer: {
 		position: 'absolute',
-		bottom: 20,
-		left: 40,
-		right: 40,
+		bottom: 30,
+		left: 0,
+		right: 0,
 		textAlign: 'center',
-		color: '#999',
-		fontSize: 8,
-		borderTopWidth: 1,
-		borderTopColor: '#eee',
-		paddingTop: 10,
+	},
+	footerLink: {
+		color: '#0000EE',
+		fontSize: 12,
+		textDecoration: 'underline',
 	},
 });
 
@@ -154,23 +155,39 @@ interface ContractDocumentProps {
 	data: ContractData;
 }
 
+const LOGO_SRC =
+	typeof window !== 'undefined'
+		? `${window.location.origin}/logo.png`
+		: '/logo.png';
+
 const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 	const isEvent = data.segmento?.toLowerCase().includes('evento');
+
+	const finalAdesaoNum =
+		data.finalAdesao !== undefined ? data.finalAdesao : 0;
+	const finalMensalidadeNum =
+		data.finalMensalidade !== undefined ? data.finalMensalidade : 0;
+	const totalValue = (finalAdesaoNum + finalMensalidadeNum)
+		.toFixed(2)
+		.replace('.', ',');
 
 	return (
 		<Document>
 			<Page size="A4" style={styles.page}>
-				{/* Cabeçalho Fixo (prop 'fixed') garante repetição em todas as páginas */}
-				<View style={styles.header} fixed>
-					<Image
-						style={styles.headerLogo}
-						src={typeof window !== 'undefined' ? `${window.location.origin}/logo-bix-automacao.png` : '/logo-bix-automacao.png'}
-					/>
-					<Image
-						style={styles.headerLogo}
-						src="https://uaipdv.com.br/images/Logo7-removebg-preview.png"
-					/>
+				<View
+					style={[styles.header, { justifyContent: 'flex-start' }]}
+					fixed
+				>
+					<Image style={styles.headerLogo} src={LOGO_SRC} />
 				</View>
+				<Text style={styles.footer} fixed>
+					<Link
+						style={styles.footerLink}
+						src="https://www.uaipdv.com.br"
+					>
+						www.uaipdv.com.br
+					</Link>
+				</Text>
 
 				<Text style={styles.title}>
 					CONTRATO DE IMPLANTAÇÃO DE SOFTWARE
@@ -189,7 +206,10 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 						<Text style={styles.label}>ENDEREÇO:</Text>
 						<Text style={styles.value}>
 							{data.rua}, {data.semNumero ? 'S/N' : data.numero}
-							{data.complemento ? `, ${data.complemento}` : ''}, {data.bairro}, {data.cidade} - {data.uf}, CEP: {data.cep}
+							{data.complemento
+								? `, ${data.complemento}`
+								: ''}, {data.bairro}, {data.cidade} - {data.uf},
+							CEP: {data.cep}
 						</Text>
 					</View>
 					<View style={styles.fieldRow}>
@@ -211,17 +231,9 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 				</View>
 
 				<View style={styles.section}>
-					<Text
-						style={[
-							styles.paragraph,
-							styles.bold,
-							{ textDecoration: 'underline' },
-						]}
-					>
-						CONTRATADO: BIX SOLUÇÕES COM CNPJ: 47.054.579/0001-39,
-						REPRESENTADA NESTE CONTRATO PELA EMPRESA DO GRUPO UAI
-						PDV - Unidade de Atendimento Integrado Para Ponto de
-						Venda INSCRITA NO CNPJ:24.865.243/0001- 50.
+					<Text style={[styles.paragraph, styles.bold]}>
+						CONTRATADO: BIX SOLUÇÕES COM CNPJ: 47.054.579/0001-39 é
+						responsável pelo produto UAI PDV Automação.
 					</Text>
 					<Text style={styles.paragraph}>
 						As partes acima identificadas têm, entre si, justas e
@@ -247,132 +259,273 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 
 				<View style={styles.section}>
 					<Text style={styles.clauseTitle}>
-						Cláusula 2ª. Funções e Características
-					</Text>
-					<Text style={styles.paragraph}>
-						A solução tem as seguintes funções e características,
-						totalizando em módulos disponíveis com valores distintos
-						ao CONTRATANTE:
+						Cláusula 2ª. A solução tem as seguintes funções e
+						características, totalizando em módulos disponíveis com
+						valores distintos ao CONTRATANTE:
 					</Text>
 
 					<Text style={[styles.bold, { marginTop: 5 }]}>
 						Licença do Módulo Produção/ PDV:
 					</Text>
-					<Text>Vendas; Encerramento de Operador; Sangria.</Text>
+					<Text>Vendas;</Text>
+					<Text>Encerramento de Operador;</Text>
+					<Text>Sangria.</Text>
 
 					<Text style={[styles.bold, { marginTop: 5 }]}>
 						Módulo Gerencial:
 					</Text>
-					<Text>
-						Cadastro de Usuários; Cadastro de Colaborador; Cadastro
-						de Produtos; Relatórios Gestão de Vendas.
-					</Text>
+					<Text>Cadastro de Usuários;</Text>
+					<Text>Cadastro de Colaborador;</Text>
+					<Text>Cadastro de Produtos;</Text>
+					<Text>Relatórios Gestão de Vendas.</Text>
 
 					<Text style={[styles.bold, { marginTop: 5 }]}>
 						Suporte a dúvidas:
 					</Text>
-					<Text>Telefone; Remoto; WhatsApp.</Text>
+					<Text>Telefone;</Text>
+					<Text>Remoto;</Text>
+					<Text>WhatsApp.</Text>
 				</View>
 
 				<View style={styles.section}>
-					<Text style={styles.clauseTitle}>Disposições Gerais</Text>
 					<Text style={styles.paragraph}>
-						PARÁGRAFO PRIMEIRO: {data.semFidelidade ? 'O presente contrato NÃO POSSUI FIDELIDADE.' : 'Caso a CONTRATANTE deseje rescindir o presente instrumento, antes de 30 (Trinta dias) pagará à CONTRATADA a título de multa, o equivalente a R$ 100,00 (Cem Reais) e QUITAR os títulos em aberto referente aos equipamentos e serviços.'}
+						<Text style={styles.bold}>PARÁGRAFO PRIMEIRO:</Text>{' '}
+						Caso a CONTRATANTE deseje rescindir o presente
+						instrumento, antes de 30 (Trinta dias) pagará à
+						CONTRATADA a título de multa, o equivalente a R$ 100,00
+						(Cem Reais) e QUITAR os títulos em aberto referente aos
+						equipamentos e serviços;
 					</Text>
 					<Text style={styles.paragraph}>
-						CLÁUSULA 3ª Após aprovação o pagamento deve ser
-						realizado por meio eletrônico ou físico, CONTRATANTE e
-						CONTRATADO. Dará início a disponibilidade da solução e
-						treinamento.
+						<Text style={styles.bold}>CLÁUSULA 3ª</Text> Após
+						aprovação o pagamento deve ser realizado por meio
+						eletrônico ou físico, CONTRATANTE e CONTRATADO. Dará
+						início a disponibilidade da solução no PARÁGRAFO QUARTO
+						e treinamento, que será realizada no formato on-line na
+						CONTRATANTE.
 					</Text>
 					<Text style={styles.paragraph}>
-						PARÁGRAFO TERCEIRO: O sistema de automação para ponto de
-						venda compreende nos seguintes itens: 1 Sistema
-						GERENCIAL e VENDAS na plataforma Windows e Android.
+						<Text style={styles.bold}>PARÁGRAFO SEGUNDO:</Text>{' '}
+						Havendo interesse de ambas as partes, o presente
+						contrato poderá ser renovado, mediante a hipótese em que
+						poderá haver reajuste dos valores e alteração dos
+						serviços baseado no índice de correção do IGPM /Ano .
+					</Text>
+					<Text style={styles.paragraph}>
+						<Text style={styles.bold}>PARÁGRAFO TERCEIRO:</Text> O
+						sistema de automação para ponto de venda compreende nos
+						seguintes itens:
+						{'\n'}– 1 Sistema GERENCIAL e VENDAS na plataforma
+						Windows e Android;
 					</Text>
 				</View>
 
 				<View style={styles.section}>
-					<Text style={styles.clauseTitle}>Valores</Text>
 					<Text style={styles.paragraph}>
-						PARÁGRAFO QUARTO: Os valores e taxas da solução
-						contratada correspondem aos pontos:
+						<Text style={styles.bold}>PARÁGRAFO QUARTO:</Text> Os
+						valores e taxas da solução contratada correspondem aos
+						pontos:
+						{'\n'}• Ativação e Configuração do Sistema : R$:{' '}
+						{finalAdesaoNum.toFixed(2).replace('.', ',')};{'\n'}•
+						Mensalidade: R$:{' '}
+						{finalMensalidadeNum.toFixed(2).replace('.', ',')};
+						{'\n'}• Quantidade de PDVs : {data.qtdeLicencas || '1'};
+						{'\n'}• Total: R$ {totalValue}
 					</Text>
-					<View style={{ marginLeft: 10 }}>
-						{!isEvent && data.qtdeLicencas && (
-							<Text>
-								• Número de licença ativa: ({data.qtdeLicencas})
-								PDV
-							</Text>
-						)}
-						<Text
-							style={{
-								marginTop: 5,
-								fontFamily: 'Helvetica-Bold',
-							}}
-						>
-							Adesão UAI PDV Mais: R$ {data.finalAdesao !== undefined ? data.finalAdesao.toFixed(2).replace('.', ',') : '250,00'}
-							{data.baseAdesao && data.finalAdesao !== data.baseAdesao ? ` (De R$ ${data.baseAdesao.toFixed(2).replace('.', ',')})` : ''}
+				</View>
+
+				<View style={styles.section}>
+					<Text style={styles.paragraph}>
+						<Text style={styles.bold}>PARÁGRAFO QUINTO:</Text>{' '}
+						Atraso no pagamento da mensalidade e/ou adesão,
+						corresponde a 2,0% multa e 0,33 juros dia.
+					</Text>
+					<Text style={styles.paragraph}>
+						<Text style={styles.bold}>Cláusula 4ª</Text> O
+						CONTRATANTE é responsável pelas informações inseridas no
+						software.
+					</Text>
+					<Text style={styles.paragraph}>
+						<Text style={styles.bold}>Cláusula 5ª</Text> O
+						CONTRATANTE é responsável pelo pagamento, refere-se a
+						todos os serviços e equipamentos oferecidos pela
+						CONTRATADO.
+					</Text>
+					<Text style={styles.paragraph}>
+						<Text style={styles.bold}>Cláusula 6ª</Text> O
+						CONTRATADO é responsável no fornecimento dos serviços
+						prestados.
+					</Text>
+					<Text style={styles.paragraph}>
+						<Text style={styles.bold}>Cláusula 9º</Text> O
+						CONTRATADO é responsável na execução da Cláusula 2 º e
+						Cláusula 3 º caso não cumpra o CONTRATANTE será isento,
+						no valor que é citado no PARÁGRAFO QUARTO do item II.
+					</Text>
+				</View>
+
+				<View style={styles.section}>
+					<Text style={styles.paragraph}>
+						<Text style={styles.bold}>Cláusula 10º</Text> O
+						CONTRATANTE TEM O direito aos seguintes serviços que
+						corresponde a mensalidade:
+						{'\n'}1. Atualização/Correção do “Aplicativo” via acesso
+						remoto;
+						{'\n'}2. Disponibilização do sistema de GESTÃO em nuvem;
+						{'\n'}3. Orientação técnica dos equipamentos
+						homologados;
+						{'\n'}4. Orientação técnica e funcional do sistema via
+						telefônico;
+						{'\n'}5. Suporte técnico via telefônico.
+					</Text>
+				</View>
+
+				<View style={styles.section}>
+					<Text style={styles.paragraph}>
+						<Text style={styles.bold}>Cláusula 11º</Text> Serviços
+						disponíveis oferecidos aos clientes, mediante APROVAÇÃO
+						da proposta:
+						{'\n'}1. Aquisição de nova licença e instalação física
+						de equipamento;
+						{'\n'}2. Desenvolvimento de nova função do “Aplicativo”;
+						{'\n'}3. Serviço de consultoria funcional e técnica;
+						{'\n'}4. Suporte presencial ou implantação presencial ao
+						cliente, valor hora ou orçamento;
+						{'\n'}5. Troca de Equipamentos;
+						{'\n'}7. Novo treinamento para usuários.
+					</Text>
+				</View>
+
+				<View style={styles.section}>
+					<Text style={styles.paragraph}>
+						<Text style={styles.bold}>
+							Cláusula 12º Prazos e Regras:
+						</Text>
+						{'\n'}1. Vencimento da mensalidade é todo dia 05,
+						estendendo o prazo até o dia 15 do mês corrente;
+						{'\n'}2. A licença ativada, entre o dia 1º até último
+						dia do mês corrente, é cobrada o valor integral da
+						mensalidade;
+						{'\n'}3. O CONTRATADO disponibiliza o canal direto com
+						seus clientes via telefone e WhatsApp;
+						{'\n'}4. Após 10 dias em Atraso, O CONTRATADO, tem o
+						direito de restringir de forma total ou parcial os
+						serviços. Sendo o dia 15 (Quinze) do mês corrente o
+						prazo final para o pagamento, aplicando multas 2% e
+						0,033% dia;
+						{'\n'}5. Cancelamento do “Aplicativo”, deve ser
+						FORMALIZADA por WhatsApp ou e-mail. A sua efetivação,
+						cancelamento, ocorrerá MEDIANTE o pagamento da
+						mensalidade do mês corrente;
+						{'\n'}6. O preço da mensalidade é cobrado referente ao
+						número de “Aplicativos” e módulos ativados para o
+						cliente;
+						{'\n'}7. A correção da mensalidade é aplicada ANUAL,
+						sendo a data, assinatura/ACEITE, PARA aplicar o índice
+						de correção IGPM;
+						{'\n'}8. No caso de débitos, O CONTRATADO é facultativo
+						a inclusão no SERASA/SPC;
+						{'\n'}9. Os equipamentos tem garantia da Stone e chip de
+						dados fornecido pela adquirencia;
+						{'\n'}10. Mal uso dos equipamentos gera perda da
+						garantia;
+						{'\n'}11. É responsabilidade do CONTRATANTE, entregar o
+						Certificado digital no formato A1 a CONTRATADA,
+						necessário PARA ativar o módulo fiscal;
+						{'\n'}12. As taxas veiculadas por parceiros e
+						fornecedores dos serviços prestados, a CONTRATADA não
+						tem responsabilidade referente as taxas. A CONTRATADA
+						disponibiliza funções de integração e garante os
+						recursos em módulos específicos, tais como: IFood, TEF e
+						Stone;
+						{'\n'}13. O aplicativo ou APK disponível é direcionado
+						para dispositivos com sistema operacional Android;
+						{'\n'}14. Título em aberto após 15 dias a CONTRATANTE
+						deverá devolver todos os equipamentos relacionas;
+						{'\n'}15. Liberação da plataforma, após pagamento de
+						qualquer débito.
+					</Text>
+				</View>
+
+				<View style={styles.section}>
+					<Text style={styles.clauseTitle}>Forma de Pagamento</Text>
+					<View
+						style={{
+							flexDirection: 'row',
+							justifyContent: 'space-between',
+							marginBottom: 5,
+						}}
+					>
+						<Text style={{ width: '60%', ...styles.bold }}>
+							Descrição
 						</Text>
 						<Text
 							style={{
-								marginTop: 2,
-								fontFamily: 'Helvetica-Bold',
+								width: '20%',
+								textAlign: 'center',
+								...styles.bold,
 							}}
 						>
-							Valor da Mensalidade: R$ {data.finalMensalidade !== undefined ? data.finalMensalidade.toFixed(2).replace('.', ',') : '189,90'} (Conforme variação de licenças)
-							{data.baseMensalidade && data.finalMensalidade !== data.baseMensalidade ? ` (De R$ ${data.baseMensalidade.toFixed(2).replace('.', ',')})` : ''}
+							Quantidade
 						</Text>
-						{data.cupomDesconto && (
-							<Text style={{ marginTop: 2, color: '#059669' }}>
-								• Cupom de Desconto Aplicado: {data.cupomDesconto}
-							</Text>
-						)}
+						<Text
+							style={{
+								width: '20%',
+								textAlign: 'right',
+								...styles.bold,
+							}}
+						>
+							Total
+						</Text>
 					</View>
-				</View>
+					<View
+						style={{
+							flexDirection: 'row',
+							justifyContent: 'space-between',
+							marginBottom: 3,
+						}}
+					>
+						<Text style={{ width: '60%' }}>
+							Item: A – Disponibilização
+						</Text>
+						<Text style={{ width: '20%', textAlign: 'center' }}>
+							1
+						</Text>
+						<Text style={{ width: '20%', textAlign: 'right' }}>
+							R$ {finalAdesaoNum.toFixed(2).replace('.', ',')}
+						</Text>
+					</View>
+					<View
+						style={{
+							flexDirection: 'row',
+							justifyContent: 'space-between',
+							marginBottom: 10,
+						}}
+					>
+						<Text style={{ width: '60%' }}>
+							Item: B – Licença Equipamentos Mensalidade
+						</Text>
+						<Text style={{ width: '20%', textAlign: 'center' }}>
+							{data.qtdeLicencas || '1'}
+						</Text>
+						<Text style={{ width: '20%', textAlign: 'right' }}>
+							R${' '}
+							{finalMensalidadeNum.toFixed(2).replace('.', ',')}
+						</Text>
+					</View>
+					<Text style={[styles.bold, { marginTop: 10 }]}>
+						Adesão UAI PDV Mais: R$ {totalValue}
+					</Text>
 
-				<View style={styles.section}>
-					<Text style={styles.clauseTitle}>
-						Prazos e Regras (Cláusula 12ª)
+					<Text style={{ marginTop: 10 }}>
+						*OBS: POS Stone NÃO inclusa no contrato, deve ser
+						contrato a parte
 					</Text>
-					<Text style={styles.paragraph}>
-						1. Vencimento da mensalidade é todo dia 05, estendendo o
-						prazo até o dia 15 do mês corrente;
+					<Text style={{ marginTop: 5 }}>
+						Após os pagamentos realizados e confirmados em conta do
+						CONTRATADO, é de responsabilidade da CONTRATANTE a
+						Cláusula 10ª.
 					</Text>
-					<Text style={styles.paragraph}>
-						2. A licença ativada, entre o dia 1º até último dia do
-						mês corrente, é cobrada o valor integral da mensalidade;
-					</Text>
-					<Text style={styles.paragraph}>
-						3. O CONTRATADO disponibiliza o canal direto com seus
-						clientes via telefone e WhatsApp;
-					</Text>
-					<Text style={styles.paragraph}>
-						4. Cancelamento deve ser FORMALIZADO por WhatsApp ou
-						e-mail.
-					</Text>
-				</View>
-
-				<View style={styles.section}>
-					<Text style={styles.clauseTitle}>
-						Regras Gerais
-					</Text>
-					{isEvent ? (
-						<View style={{ marginLeft: 10 }}>
-							<Text style={styles.paragraph}>
-								• Período do Evento: {data.dataInicio ? data.dataInicio.split('-').reverse().join('/') : ''} a {data.dataFim ? data.dataFim.split('-').reverse().join('/') : ''}
-							</Text>
-							<Text style={styles.paragraph}>
-								• Quantidade de Máquinas: {data.qtdeMaquinas}
-							</Text>
-						</View>
-					) : (
-						<View style={{ marginLeft: 10 }}>
-							<Text style={styles.paragraph}>
-								• Quantidade de Licenças: {data.qtdeLicencas}
-							</Text>
-						</View>
-					)}
 				</View>
 
 				<View style={styles.section}>
@@ -389,7 +542,7 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 
 				<View style={styles.signatureSection} wrap={false}>
 					<View style={styles.signatureBlock}>
-						<View style={{ height: 45 }} /> {/* Espaço para alinhar com o outro lado */}
+						<View style={{ height: 45 }} />
 						<View style={styles.signatureLine}>
 							<Text style={styles.bold}>CONTRATADO</Text>
 							<Text>BIX SOLUÇÕES</Text>
@@ -410,40 +563,86 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 						</View>
 					</View>
 				</View>
-
-				<Text
-					style={styles.footer}
-					fixed
-					render={({ pageNumber, totalPages }) =>
-						`${pageNumber} / ${totalPages}`
-					}
-				/>
 			</Page>
 
 			{/* Páginas de Anexos */}
 			{data.attachedDocument && (
 				<Page size="A4" style={styles.page}>
-					<Text style={styles.title}>ANEXO: DOCUMENTO DO CLIENTE</Text>
-					<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+					<View
+						style={[
+							styles.header,
+							{ justifyContent: 'flex-start' },
+						]}
+						fixed
+					>
+						<Image style={styles.headerLogo} src={LOGO_SRC} />
+					</View>
+					<Text style={styles.footer} fixed>
+						<Link
+							style={styles.footerLink}
+							src="https://www.uaipdv.com.br"
+						>
+							www.uaipdv.com.br
+						</Link>
+					</Text>
+					<Text style={styles.title}>
+						ANEXO: DOCUMENTO DO CLIENTE
+					</Text>
+					<View
+						style={{
+							flex: 1,
+							justifyContent: 'center',
+							alignItems: 'center',
+						}}
+					>
 						<Image
 							src={data.attachedDocument}
-							style={{ maxWidth: '100%', maxHeight: '80%', objectFit: 'contain' }}
+							style={{
+								maxWidth: '100%',
+								maxHeight: '80%',
+								objectFit: 'contain',
+							}}
 						/>
 					</View>
-					<Text style={styles.footer} fixed render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
 				</Page>
 			)}
 
 			{data.capturedPhoto && (
 				<Page size="A4" style={styles.page}>
+					<View
+						style={[
+							styles.header,
+							{ justifyContent: 'flex-start' },
+						]}
+						fixed
+					>
+						<Image style={styles.headerLogo} src={LOGO_SRC} />
+					</View>
+					<Text style={styles.footer} fixed>
+						<Link
+							style={styles.footerLink}
+							src="https://www.uaipdv.com.br"
+						>
+							www.uaipdv.com.br
+						</Link>
+					</Text>
 					<Text style={styles.title}>ANEXO: FOTO DO CLIENTE</Text>
-					<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+					<View
+						style={{
+							flex: 1,
+							justifyContent: 'center',
+							alignItems: 'center',
+						}}
+					>
 						<Image
 							src={data.capturedPhoto}
-							style={{ maxWidth: '100%', maxHeight: '80%', objectFit: 'contain' }}
+							style={{
+								maxWidth: '100%',
+								maxHeight: '80%',
+								objectFit: 'contain',
+							}}
 						/>
 					</View>
-					<Text style={styles.footer} fixed render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
 				</Page>
 			)}
 		</Document>
