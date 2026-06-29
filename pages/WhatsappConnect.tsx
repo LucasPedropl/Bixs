@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 // CONFIGURAÇÃO RÁPIDA (Autenticação Automática)
 // =========================================================================
 // 1. Configure aqui a rota e os dados para obter o token automaticamente
-const AUTH_URL = 'https://dev.bixs.com.br/v1/auth/login';
+const AUTH_URL = 'https://api.bixs.com.br/v1/auth/login';
 const AUTH_PAYLOAD = {
 	email: 'pedrolucasmota2005@gmail.com',
 	password: 'M6433vlks*',
@@ -21,7 +21,7 @@ const INSTANCE_NAME = 'whatsapp-' + Math.floor(Math.random() * 1000);
 
 // =========================================================================
 
-const BASE_URL = 'https://dev.bixs.com.br/v1/api/message/instances';
+const BASE_URL = 'https://api.bixs.com.br/v1/api/message/instances';
 
 const WhatsappConnect: React.FC = () => {
 	const [token, setToken] = useState<string | null>(null);

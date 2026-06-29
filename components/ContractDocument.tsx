@@ -118,6 +118,13 @@ const styles = StyleSheet.create({
 	},
 });
 
+interface ContractItem {
+	label: string;
+	quantidade: number;
+	mensalidadeTotal: number;
+	adesaoTotal: number;
+}
+
 interface ContractData {
 	contratante: string;
 	cpfCnpj: string;
@@ -135,16 +142,23 @@ interface ContractData {
 	cpfResponsavel: string;
 	segmento: string;
 	// Campos opcionais dependendo do segmento
+	businessType?: 'evento' | 'mensalidade' | 'autoatendimento' | null;
 	dataInicio?: string;
 	dataFim?: string;
 	qtdeMaquinas?: string;
 	qtdeLicencas?: string;
+	qtdeTotens?: string;
+	controleEstoque?: boolean;
+	emissaoFiscal?: boolean;
+	gestaoEventos?: boolean;
+	qtdeInstancias?: string;
 	cupomDesconto?: string;
 	semFidelidade?: boolean;
 	baseAdesao?: number;
 	baseMensalidade?: number;
 	finalAdesao?: number;
 	finalMensalidade?: number;
+	items?: ContractItem[];
 	// Novos campos para assinatura e anexos
 	signature?: string; // Data URL
 	attachedDocument?: string; // Data URL
@@ -155,21 +169,42 @@ interface ContractDocumentProps {
 	data: ContractData;
 }
 
+import logoImg from '../public/logo.png';
+
 const LOGO_SRC =
 	typeof window !== 'undefined'
-		? `${window.location.origin}/logo.png`
-		: '/logo.png';
+		? new URL(logoImg, document.baseURI || window.location.href).href
+		: logoImg;
+
+const formatCurrency = (value: number) =>
+	value.toFixed(2).replace('.', ',');
 
 const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
-	const isEvent = data.segmento?.toLowerCase().includes('evento');
+	const isEvent = data.businessType
+		? data.businessType === 'evento'
+		: data.segmento?.toLowerCase().includes('evento');
+	const isAuto = data.businessType === 'autoatendimento';
 
 	const finalAdesaoNum =
 		data.finalAdesao !== undefined ? data.finalAdesao : 0;
 	const finalMensalidadeNum =
 		data.finalMensalidade !== undefined ? data.finalMensalidade : 0;
-	const totalValue = (finalAdesaoNum + finalMensalidadeNum)
-		.toFixed(2)
-		.replace('.', ',');
+	const totalValue = formatCurrency(finalAdesaoNum + finalMensalidadeNum);
+
+	const items: ContractItem[] = data.items && data.items.length > 0 ? data.items : [];
+	const baseAdesaoNum =
+		data.baseAdesao !== undefined ? data.baseAdesao : finalAdesaoNum;
+	const baseMensalidadeNum =
+		data.baseMensalidade !== undefined ? data.baseMensalidade : finalMensalidadeNum;
+	const descontoTotal =
+		baseAdesaoNum + baseMensalidadeNum - (finalAdesaoNum + finalMensalidadeNum);
+
+	const quantidadePdvs = isEvent
+		? data.qtdeMaquinas
+		: isAuto
+			? data.qtdeTotens
+			: data.qtdeLicencas || '1';
+	const labelQuantidade = isAuto ? 'Quantidade de Totens (PDVs)' : 'Quantidade de PDVs';
 
 	return (
 		<Document>
@@ -329,7 +364,7 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 						{finalAdesaoNum.toFixed(2).replace('.', ',')};{'\n'}•
 						Mensalidade: R$:{' '}
 						{finalMensalidadeNum.toFixed(2).replace('.', ',')};
-						{'\n'}• Quantidade de PDVs : {data.qtdeLicencas || '1'};
+						{'\n'}• {labelQuantidade} : {quantidadePdvs || '1'};
 						{'\n'}• Total: R$ {totalValue}
 					</Text>
 				</View>
@@ -454,19 +489,22 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 							flexDirection: 'row',
 							justifyContent: 'space-between',
 							marginBottom: 5,
+							borderBottomWidth: 1,
+							borderBottomColor: '#ccc',
+							paddingBottom: 3,
 						}}
 					>
-						<Text style={{ width: '60%', ...styles.bold }}>
+						<Text style={{ width: '46%', ...styles.bold }}>
 							Descrição
 						</Text>
 						<Text
 							style={{
-								width: '20%',
+								width: '14%',
 								textAlign: 'center',
 								...styles.bold,
 							}}
 						>
-							Quantidade
+							Qtd
 						</Text>
 						<Text
 							style={{
@@ -475,47 +513,96 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 								...styles.bold,
 							}}
 						>
-							Total
+							Mensal
+						</Text>
+						<Text
+							style={{
+								width: '20%',
+								textAlign: 'right',
+								...styles.bold,
+							}}
+						>
+							Ativação
 						</Text>
 					</View>
-					<View
-						style={{
-							flexDirection: 'row',
-							justifyContent: 'space-between',
-							marginBottom: 3,
-						}}
-					>
-						<Text style={{ width: '60%' }}>
-							Item: A – Disponibilização
+
+					{items.length > 0 ? (
+						items.map((item, idx) => (
+							<View
+								key={`${item.label}-${idx}`}
+								style={{
+									flexDirection: 'row',
+									justifyContent: 'space-between',
+									marginBottom: 3,
+								}}
+							>
+								<Text style={{ width: '46%' }}>{item.label}</Text>
+								<Text style={{ width: '14%', textAlign: 'center' }}>
+									{item.quantidade}
+								</Text>
+								<Text style={{ width: '20%', textAlign: 'right' }}>
+									{item.mensalidadeTotal > 0
+										? `R$ ${formatCurrency(item.mensalidadeTotal)}`
+										: '—'}
+								</Text>
+								<Text style={{ width: '20%', textAlign: 'right' }}>
+									{item.adesaoTotal > 0
+										? `R$ ${formatCurrency(item.adesaoTotal)}`
+										: '—'}
+								</Text>
+							</View>
+						))
+					) : (
+						<View
+							style={{
+								flexDirection: 'row',
+								justifyContent: 'space-between',
+								marginBottom: 3,
+							}}
+						>
+							<Text style={{ width: '46%' }}>
+								Licença e Disponibilização do Sistema
+							</Text>
+							<Text style={{ width: '14%', textAlign: 'center' }}>
+								{quantidadePdvs || '1'}
+							</Text>
+							<Text style={{ width: '20%', textAlign: 'right' }}>
+								R$ {formatCurrency(finalMensalidadeNum)}
+							</Text>
+							<Text style={{ width: '20%', textAlign: 'right' }}>
+								R$ {formatCurrency(finalAdesaoNum)}
+							</Text>
+						</View>
+					)}
+
+					{descontoTotal > 0 && (
+						<View
+							style={{
+								flexDirection: 'row',
+								justifyContent: 'space-between',
+								marginTop: 5,
+							}}
+						>
+							<Text style={{ width: '60%' }}>
+								Desconto aplicado{data.cupomDesconto ? ` (cupom ${data.cupomDesconto.toUpperCase()})` : ''}
+							</Text>
+							<Text style={{ width: '40%', textAlign: 'right' }}>
+								- R$ {formatCurrency(descontoTotal)}
+							</Text>
+						</View>
+					)}
+
+					<View style={{ marginTop: 8 }}>
+						<Text style={styles.bold}>
+							Total Mensalidade: R$ {formatCurrency(finalMensalidadeNum)}
 						</Text>
-						<Text style={{ width: '20%', textAlign: 'center' }}>
-							1
+						<Text style={styles.bold}>
+							Total Ativação: R$ {formatCurrency(finalAdesaoNum)}
 						</Text>
-						<Text style={{ width: '20%', textAlign: 'right' }}>
-							R$ {finalAdesaoNum.toFixed(2).replace('.', ',')}
+						<Text style={[styles.bold, { marginTop: 3 }]}>
+							Total Geral (1ª parcela): R$ {totalValue}
 						</Text>
 					</View>
-					<View
-						style={{
-							flexDirection: 'row',
-							justifyContent: 'space-between',
-							marginBottom: 10,
-						}}
-					>
-						<Text style={{ width: '60%' }}>
-							Item: B – Licença Equipamentos Mensalidade
-						</Text>
-						<Text style={{ width: '20%', textAlign: 'center' }}>
-							{data.qtdeLicencas || '1'}
-						</Text>
-						<Text style={{ width: '20%', textAlign: 'right' }}>
-							R${' '}
-							{finalMensalidadeNum.toFixed(2).replace('.', ',')}
-						</Text>
-					</View>
-					<Text style={[styles.bold, { marginTop: 10 }]}>
-						Adesão UAI PDV Mais: R$ {totalValue}
-					</Text>
 
 					<Text style={{ marginTop: 10 }}>
 						*OBS: POS Stone NÃO inclusa no contrato, deve ser

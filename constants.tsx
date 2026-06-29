@@ -74,7 +74,7 @@ export const PRODUCTS: Product[] = [
 		title: 'Print App',
 		description:
 			'Imprima com facilidade Etiquetas, Comandas e Cartazes direto do Celular ou Tablet.',
-		image: 'https://uaipdv.com.br/printapp/images/ImagemdoWhatsAppde2025-06-10s19.46.23_e676c340.jpg?rand=bdb2',
+		image: 'https://uaipdv.com.br/printapp/logo.jpg',
 		link: 'https://uaipdv.com.br/printapp/',
 		logoColor: 'bg-purple-50',
 	},
