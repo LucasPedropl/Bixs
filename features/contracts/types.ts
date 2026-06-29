@@ -15,6 +15,7 @@ export interface FormData {
 	email: string;
 	responsavel: string;
 	cpfResponsavel: string;
+	dataNascimento?: string;
 	segmento: string;
 	dataInicio?: string;
 	dataFim?: string;
@@ -27,6 +28,9 @@ export interface FormData {
 	// Gestão de Eventos (add-on do tipo Evento)
 	gestaoEventos?: boolean;
 	qtdeInstancias?: string;
+	// Máquinas em comodato (add-on informativo do tipo Evento, não soma nos valores)
+	comodato?: boolean;
+	qtdeComodato?: string;
 	cupomDesconto: string;
 	semFidelidade: boolean;
 }
@@ -54,4 +58,6 @@ export interface Pricing {
 	blockEvent: boolean;
 	eventBlockMessage: string;
 	items: PricingItem[];
+	/** Indica se o valor de mensalidade é aplicável (false para Eventos). */
+	showMensalidade: boolean;
 }

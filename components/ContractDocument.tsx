@@ -179,6 +179,13 @@ const LOGO_SRC =
 const formatCurrency = (value: number) =>
 	value.toFixed(2).replace('.', ',');
 
+const formatIsoDate = (iso?: string) => {
+	if (!iso) return '';
+	const [year, month, day] = iso.split('-');
+	if (!year || !month || !day) return iso;
+	return `${day}/${month}/${year}`;
+};
+
 const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 	const isEvent = data.businessType
 		? data.businessType === 'evento'
@@ -205,6 +212,7 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 			? data.qtdeTotens
 			: data.qtdeLicencas || '1';
 	const labelQuantidade = isAuto ? 'Quantidade de Totens (PDVs)' : 'Quantidade de PDVs';
+	const showMensalidade = !isEvent;
 
 	return (
 		<Document>
@@ -261,7 +269,17 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 							{data.responsavel}
 						</Text>
 						<Text style={styles.label}>CPF:</Text>
-						<Text style={styles.value}>{data.cpfResponsavel}</Text>
+						<Text style={[styles.value, { marginRight: 20 }]}>
+							{data.cpfResponsavel}
+						</Text>
+						{data.dataNascimento ? (
+							<>
+								<Text style={styles.label}>NASCIMENTO:</Text>
+								<Text style={styles.value}>
+									{formatIsoDate(data.dataNascimento)}
+								</Text>
+							</>
+						) : null}
 					</View>
 				</View>
 
@@ -360,11 +378,15 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 						<Text style={styles.bold}>PARÁGRAFO QUARTO:</Text> Os
 						valores e taxas da solução contratada correspondem aos
 						pontos:
-						{'\n'}• Ativação e Configuração do Sistema : R$:{' '}
-						{finalAdesaoNum.toFixed(2).replace('.', ',')};{'\n'}•
-						Mensalidade: R$:{' '}
-						{finalMensalidadeNum.toFixed(2).replace('.', ',')};
+						{'\n'}• Ativação e Configuração do Sistema : R${' '}
+						{formatCurrency(finalAdesaoNum)};
+						{showMensalidade
+							? `\n• Mensalidade: R$ ${formatCurrency(finalMensalidadeNum)};`
+							: ''}
 						{'\n'}• {labelQuantidade} : {quantidadePdvs || '1'};
+						{isEvent && data.comodato && data.qtdeComodato
+							? `\n• Máquinas Stone solicitadas em comodato: ${data.qtdeComodato};`
+							: ''}
 						{'\n'}• Total: R$ {totalValue}
 					</Text>
 				</View>
@@ -494,30 +516,32 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 							paddingBottom: 3,
 						}}
 					>
-						<Text style={{ width: '46%', ...styles.bold }}>
+						<Text style={{ width: showMensalidade ? '46%' : '60%', ...styles.bold }}>
 							Descrição
 						</Text>
 						<Text
 							style={{
-								width: '14%',
+								width: showMensalidade ? '14%' : '15%',
 								textAlign: 'center',
 								...styles.bold,
 							}}
 						>
 							Qtd
 						</Text>
+						{showMensalidade && (
+							<Text
+								style={{
+									width: '20%',
+									textAlign: 'right',
+									...styles.bold,
+								}}
+							>
+								Mensal
+							</Text>
+						)}
 						<Text
 							style={{
-								width: '20%',
-								textAlign: 'right',
-								...styles.bold,
-							}}
-						>
-							Mensal
-						</Text>
-						<Text
-							style={{
-								width: '20%',
+								width: showMensalidade ? '20%' : '25%',
 								textAlign: 'right',
 								...styles.bold,
 							}}
@@ -536,16 +560,25 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 									marginBottom: 3,
 								}}
 							>
-								<Text style={{ width: '46%' }}>{item.label}</Text>
-								<Text style={{ width: '14%', textAlign: 'center' }}>
+								<Text style={{ width: showMensalidade ? '46%' : '60%' }}>
+									{item.label}
+								</Text>
+								<Text
+									style={{
+										width: showMensalidade ? '14%' : '15%',
+										textAlign: 'center',
+									}}
+								>
 									{item.quantidade}
 								</Text>
-								<Text style={{ width: '20%', textAlign: 'right' }}>
-									{item.mensalidadeTotal > 0
-										? `R$ ${formatCurrency(item.mensalidadeTotal)}`
-										: '—'}
-								</Text>
-								<Text style={{ width: '20%', textAlign: 'right' }}>
+								{showMensalidade && (
+									<Text style={{ width: '20%', textAlign: 'right' }}>
+										{item.mensalidadeTotal > 0
+											? `R$ ${formatCurrency(item.mensalidadeTotal)}`
+											: '—'}
+									</Text>
+								)}
+								<Text style={{ width: showMensalidade ? '20%' : '25%', textAlign: 'right' }}>
 									{item.adesaoTotal > 0
 										? `R$ ${formatCurrency(item.adesaoTotal)}`
 										: '—'}
@@ -560,20 +593,55 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 								marginBottom: 3,
 							}}
 						>
-							<Text style={{ width: '46%' }}>
+							<Text style={{ width: showMensalidade ? '46%' : '60%' }}>
 								Licença e Disponibilização do Sistema
 							</Text>
-							<Text style={{ width: '14%', textAlign: 'center' }}>
+							<Text
+								style={{
+									width: showMensalidade ? '14%' : '15%',
+									textAlign: 'center',
+								}}
+							>
 								{quantidadePdvs || '1'}
 							</Text>
-							<Text style={{ width: '20%', textAlign: 'right' }}>
-								R$ {formatCurrency(finalMensalidadeNum)}
-							</Text>
-							<Text style={{ width: '20%', textAlign: 'right' }}>
+							{showMensalidade && (
+								<Text style={{ width: '20%', textAlign: 'right' }}>
+									R$ {formatCurrency(finalMensalidadeNum)}
+								</Text>
+							)}
+							<Text style={{ width: showMensalidade ? '20%' : '25%', textAlign: 'right' }}>
 								R$ {formatCurrency(finalAdesaoNum)}
 							</Text>
 						</View>
 					)}
+
+					{isEvent && data.comodato && data.qtdeComodato ? (
+						<View
+							style={{
+								flexDirection: 'row',
+								justifyContent: 'space-between',
+								marginBottom: 3,
+							}}
+						>
+							<Text style={{ width: showMensalidade ? '46%' : '60%' }}>
+								Máquinas Stone em comodato (sem custo)
+							</Text>
+							<Text
+								style={{
+									width: showMensalidade ? '14%' : '15%',
+									textAlign: 'center',
+								}}
+							>
+								{data.qtdeComodato}
+							</Text>
+							{showMensalidade && (
+								<Text style={{ width: '20%', textAlign: 'right' }}>—</Text>
+							)}
+							<Text style={{ width: showMensalidade ? '20%' : '25%', textAlign: 'right' }}>
+								—
+							</Text>
+						</View>
+					) : null}
 
 					{descontoTotal > 0 && (
 						<View
@@ -593,14 +661,18 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 					)}
 
 					<View style={{ marginTop: 8 }}>
+						{showMensalidade && (
+							<Text style={styles.bold}>
+								Total Mensalidade: R$ {formatCurrency(finalMensalidadeNum)}
+							</Text>
+						)}
 						<Text style={styles.bold}>
-							Total Mensalidade: R$ {formatCurrency(finalMensalidadeNum)}
-						</Text>
-						<Text style={styles.bold}>
-							Total Ativação: R$ {formatCurrency(finalAdesaoNum)}
+							Total {showMensalidade ? 'Ativação' : 'Adesão / Ativação'}: R${' '}
+							{formatCurrency(finalAdesaoNum)}
 						</Text>
 						<Text style={[styles.bold, { marginTop: 3 }]}>
-							Total Geral (1ª parcela): R$ {totalValue}
+							{showMensalidade ? 'Total Geral (1ª parcela)' : 'Total do Evento'}: R${' '}
+							{totalValue}
 						</Text>
 					</View>
 

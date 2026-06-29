@@ -35,12 +35,15 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 		email: '',
 		responsavel: '',
 		cpfResponsavel: '',
+		dataNascimento: '',
 		segmento: '',
 		qtdeTotens: '',
 		controleEstoque: false,
 		emissaoFiscal: false,
 		gestaoEventos: false,
 		qtdeInstancias: '',
+		comodato: false,
+		qtdeComodato: '',
 		cupomDesconto: '',
 		semFidelidade: true,
 	});
@@ -235,6 +238,17 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 				else delete newErrors.qtdeInstancias;
 			}
 
+			if (name === 'qtdeComodato' && typeof value === 'string') {
+				if (value && !MAQUINAS.includes(value))
+					newErrors.qtdeComodato = 'Quantidade inválida (1-30).';
+				else delete newErrors.qtdeComodato;
+			}
+
+			if (name === 'dataNascimento' && typeof value === 'string') {
+				if (!value) newErrors.dataNascimento = 'Data de nascimento é obrigatória.';
+				else delete newErrors.dataNascimento;
+			}
+
 			if (name === 'dataInicio' || name === 'dataFim') {
 				const isEvent = formData.segmento?.toLowerCase().includes('evento');
 				if (isEvent) {
@@ -321,6 +335,18 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 			newErrors.cpfResponsavel = 'CPF inválido.';
 		}
 
+		if (!formData.dataNascimento) {
+			newErrors.dataNascimento = 'Data de nascimento é obrigatória.';
+		} else {
+			const [ny, nm, nd] = formData.dataNascimento.split('-').map(Number);
+			const nascimento = new Date(ny, nm - 1, nd);
+			const hoje = new Date();
+			hoje.setHours(0, 0, 0, 0);
+			if (nascimento > hoje) {
+				newErrors.dataNascimento = 'Data de nascimento não pode ser no futuro.';
+			}
+		}
+
 		if (businessType === 'evento') {
 			if (!formData.dataInicio) {
 				newErrors.dataInicio = 'Data de início é obrigatória.';
@@ -354,6 +380,9 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 
 			if (formData.gestaoEventos && !formData.qtdeInstancias)
 				newErrors.qtdeInstancias = 'Informe a quantidade de instâncias da Gestão de Eventos.';
+
+			if (formData.comodato && !formData.qtdeComodato)
+				newErrors.qtdeComodato = 'Informe a quantidade de máquinas em comodato.';
 		} else if (businessType === 'autoatendimento') {
 			if (!formData.qtdeTotens)
 				newErrors.qtdeTotens = 'Quantidade de totens é obrigatória.';
@@ -408,10 +437,17 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 				}
 			}
 
+			// Eventos não possuem mensalidade: todo o valor é adesão/ativação (pagamento único).
 			items.push({
-				label: 'Licença PDV (Evento)',
+				label: 'Valor do evento (uso do sistema por PDV)',
 				quantidade: pdvs,
-				mensalidadeTotal: pdvs * 89,
+				mensalidadeTotal: 0,
+				adesaoTotal: pdvs * 89,
+			});
+			items.push({
+				label: 'Taxa de ativação por PDV',
+				quantidade: pdvs,
+				mensalidadeTotal: 0,
 				adesaoTotal: pdvs * 20,
 			});
 
@@ -419,8 +455,8 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 				items.push({
 					label: 'Adicional de duração do evento',
 					quantidade: 1,
-					mensalidadeTotal: dif,
-					adesaoTotal: 0,
+					mensalidadeTotal: 0,
+					adesaoTotal: dif,
 				});
 			}
 
@@ -429,8 +465,9 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 				items.push({
 					label: 'Gestão de Eventos UAI PDV',
 					quantidade: instancias,
-					mensalidadeTotal: instancias * GESTAO_EVENTOS.valorPorInstancia,
-					adesaoTotal: GESTAO_EVENTOS.ativacao,
+					mensalidadeTotal: 0,
+					adesaoTotal:
+						instancias * GESTAO_EVENTOS.valorPorInstancia + GESTAO_EVENTOS.ativacao,
 				});
 			}
 		} else if (isAuto) {
@@ -521,11 +558,13 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 						economia =
 							baseAdesao - finalAdesao + (baseMensalidade - finalMensalidade);
 					} else if (cupom.type === 'evento_custom') {
-						const descontoMensal =
+						// Isenção da taxa de ativação (R$ 20 por PDV) + desconto por equipamento.
+						const ativacaoEvento = equipamentosEvento * 20;
+						const descontoEquipamento =
 							equipamentosEvento * (cupom.descontoMensalPorPdv || 0);
-						finalAdesao = cupom.adesao ?? 0;
-						finalMensalidade = baseMensalidade - descontoMensal;
-						economia = baseAdesao - finalAdesao + descontoMensal;
+						finalAdesao = baseAdesao - ativacaoEvento - descontoEquipamento;
+						if (finalAdesao < 0) finalAdesao = 0;
+						economia = baseAdesao - finalAdesao;
 					}
 					mensagemCupom = `Cupom válido! Você economizou R$ ${economia.toFixed(2).replace('.', ',')}. Este é um cupom de uso único e não será mais válido para este usuário após a geração.`;
 				}
@@ -545,6 +584,7 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 			blockEvent,
 			eventBlockMessage,
 			items,
+			showMensalidade: !isEvent,
 		};
 	};
 
@@ -566,6 +606,7 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 			email: 'teste.contrato@bixs.com.br',
 			responsavel: 'Joao da Silva',
 			cpfResponsavel: formatCpf('52998224725'),
+			dataNascimento: '1990-01-15',
 			segmento: 'Loja',
 			qtdeLicencas: '3',
 			qtdeMaquinas: undefined,

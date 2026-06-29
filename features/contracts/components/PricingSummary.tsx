@@ -26,7 +26,11 @@ export const PricingSummary: React.FC<PricingSummaryProps> = ({
 				Resumo do Contrato
 			</h3>
 			<div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 space-y-6">
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+				<div
+					className={`grid grid-cols-1 gap-6 ${
+						pricing.showMensalidade ? 'md:grid-cols-3' : 'md:grid-cols-2'
+					}`}
+				>
 					<div className="p-4 bg-green-50 rounded-xl border border-green-200 shadow-sm relative overflow-hidden">
 						<div className="absolute -right-2 -top-2 w-16 h-16 bg-green-100 rounded-full opacity-50"></div>
 						<p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-1">
@@ -56,24 +60,26 @@ export const PricingSummary: React.FC<PricingSummaryProps> = ({
 							)}
 						</div>
 					</div>
-					<div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
-						<p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
-							Valor Mensalidade
-						</p>
-						<div className="flex items-baseline gap-2">
-							<p className="text-xl font-extrabold text-primary-600">
-								R$ {pricing.finalMensalidade.toFixed(2).replace('.', ',')}
+					{pricing.showMensalidade && (
+						<div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+							<p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+								Valor Mensalidade
 							</p>
-							{pricing.cupomValido && pricing.finalMensalidade !== pricing.baseMensalidade && (
-								<p className="text-sm text-slate-400 line-through">
-									R$ {pricing.baseMensalidade.toFixed(2).replace('.', ',')}
+							<div className="flex items-baseline gap-2">
+								<p className="text-xl font-extrabold text-primary-600">
+									R$ {pricing.finalMensalidade.toFixed(2).replace('.', ',')}
 								</p>
-							)}
+								{pricing.cupomValido && pricing.finalMensalidade !== pricing.baseMensalidade && (
+									<p className="text-sm text-slate-400 line-through">
+										R$ {pricing.baseMensalidade.toFixed(2).replace('.', ',')}
+									</p>
+								)}
+							</div>
+							<p className="text-[10px] text-slate-400 font-medium mt-1">
+								* Conforme variação de licenças
+							</p>
 						</div>
-						<p className="text-[10px] text-slate-400 font-medium mt-1">
-							* Conforme variação de licenças
-						</p>
-					</div>
+					)}
 				</div>
 
 				{pricing.items.length > 0 && (
@@ -83,28 +89,46 @@ export const PricingSummary: React.FC<PricingSummaryProps> = ({
 						</p>
 						<div className="space-y-2">
 							<div className="hidden sm:grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">
-								<span className="col-span-6">Item</span>
+								<span className={pricing.showMensalidade ? 'col-span-6' : 'col-span-7'}>
+									Item
+								</span>
 								<span className="col-span-2 text-center">Qtd</span>
-								<span className="col-span-2 text-right">Mensal</span>
-								<span className="col-span-2 text-right">Ativação</span>
+								{pricing.showMensalidade && (
+									<span className="col-span-2 text-right">Mensal</span>
+								)}
+								<span
+									className={pricing.showMensalidade ? 'col-span-2 text-right' : 'col-span-3 text-right'}
+								>
+									Ativação
+								</span>
 							</div>
 							{pricing.items.map((item, idx) => (
 								<div
 									key={`${item.label}-${idx}`}
 									className="grid grid-cols-12 gap-2 items-center text-sm bg-white rounded-lg border border-slate-100 px-3 py-2"
 								>
-									<span className="col-span-12 sm:col-span-6 text-slate-700 font-medium">
+									<span
+										className={`text-slate-700 font-medium col-span-12 ${
+											pricing.showMensalidade ? 'sm:col-span-6' : 'sm:col-span-7'
+										}`}
+									>
 										{item.label}
 									</span>
 									<span className="col-span-4 sm:col-span-2 text-slate-500 sm:text-center text-xs">
 										<span className="sm:hidden text-slate-400">Qtd: </span>
 										{item.quantidade}
 									</span>
-									<span className="col-span-4 sm:col-span-2 text-slate-700 sm:text-right text-xs">
-										<span className="sm:hidden text-slate-400">Mensal: </span>
-										R$ {item.mensalidadeTotal.toFixed(2).replace('.', ',')}
-									</span>
-									<span className="col-span-4 sm:col-span-2 text-slate-700 sm:text-right text-xs">
+									{pricing.showMensalidade && (
+										<span className="col-span-4 sm:col-span-2 text-slate-700 sm:text-right text-xs">
+											<span className="sm:hidden text-slate-400">Mensal: </span>
+											R$ {item.mensalidadeTotal.toFixed(2).replace('.', ',')}
+										</span>
+									)}
+									<span
+										className={`text-slate-700 sm:text-right text-xs col-span-4 ${
+											pricing.showMensalidade ? 'sm:col-span-2' : 'sm:col-span-3'
+										}`}
+									>
 										<span className="sm:hidden text-slate-400">Ativação: </span>
 										R$ {item.adesaoTotal.toFixed(2).replace('.', ',')}
 									</span>

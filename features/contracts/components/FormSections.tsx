@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Store, MonitorSmartphone, Info, Ticket, Check } from 'lucide-react';
+import { Calendar, Store, MonitorSmartphone, Info, Ticket, Check, Truck } from 'lucide-react';
 import { FormData, BusinessType } from '../types';
 import { SearchableSelect } from './SearchableSelect';
 import {
@@ -570,6 +570,47 @@ export const BusinessSection: React.FC<BusinessSectionProps> = ({
 								</div>
 							)}
 						</div>
+
+						<div className="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+							<label className="flex items-start gap-3 cursor-pointer select-none">
+								<input
+									type="checkbox"
+									checked={!!formData.comodato}
+									onChange={(e) => {
+										onValueChange('comodato', e.target.checked);
+										if (!e.target.checked) {
+											onValueChange('qtdeComodato', '');
+										}
+									}}
+									className="w-5 h-5 mt-0.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+								/>
+								<span>
+									<span className="flex items-center gap-2 font-bold text-slate-800">
+										<Truck size={18} className="text-primary-600" />
+										Solicitar máquinas Stone em comodato
+									</span>
+									<span className="block text-xs text-slate-500 mt-1 leading-relaxed">
+										Smart POS da Stone em comodato (taxas: 2,69% crédito, 1,40%
+										débito, 0,50% PIX). Não soma nos valores do contrato.
+									</span>
+								</span>
+							</label>
+
+							{formData.comodato && (
+								<div className="mt-4 animate-in fade-in slide-in-from-top-1 duration-200">
+									<SearchableSelect
+										label="Quantidade de máquinas em comodato"
+										name="qtdeComodato"
+										value={formData.qtdeComodato || ''}
+										options={MAQUINAS}
+										placeholder="Selecione ou digite a quantidade"
+										onChange={onValueChange}
+										required
+										error={errors.qtdeComodato}
+									/>
+								</div>
+							)}
+						</div>
 					</>
 				)}
 
@@ -709,6 +750,21 @@ export const ResponsibleSection: React.FC<SectionProps> = ({
 					/>
 					{errors.cpfResponsavel && (
 						<p className="text-xs text-red-500 mt-1">{errors.cpfResponsavel}</p>
+					)}
+				</div>
+				<div>
+					<label className={labelClasses}>Data de Nascimento</label>
+					<input
+						type="date"
+						name="dataNascimento"
+						value={formData.dataNascimento || ''}
+						onChange={onChange}
+						max={new Date().toISOString().split('T')[0]}
+						className={`${inputClasses} ${errors.dataNascimento ? 'border-red-500 bg-red-50' : ''}`}
+						required
+					/>
+					{errors.dataNascimento && (
+						<p className="text-xs text-red-500 mt-1">{errors.dataNascimento}</p>
 					)}
 				</div>
 			</div>
