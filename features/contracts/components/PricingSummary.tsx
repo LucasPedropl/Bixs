@@ -17,34 +17,32 @@ export const PricingSummary: React.FC<PricingSummaryProps> = ({
 		'w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none text-slate-700 placeholder:text-slate-400';
 	const labelClasses = 'block text-sm font-semibold text-slate-700 mb-2';
 
+	const totalAPagar = pricing.finalMensalidade + pricing.finalAdesao;
+	const totalBase = pricing.baseMensalidade + pricing.baseAdesao;
+	const totalComDesconto = pricing.cupomValido && totalAPagar !== totalBase;
+
 	return (
 		<div>
-			<h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-2 mb-6 flex items-center gap-2">
-				<span className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 text-xs flex items-center justify-center font-sans font-medium">
-					5
-				</span>
-				Resumo do Contrato
-			</h3>
+			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-2 mb-6">
+				<h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+					<span className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 text-xs flex items-center justify-center font-sans font-medium">
+						5
+					</span>
+					Resumo do Contrato
+				</h3>
+				<div className="inline-flex items-center gap-2 self-start sm:self-auto px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-sm font-semibold text-green-800">
+					<span className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-white shrink-0">
+						<Check size={10} strokeWidth={3} />
+					</span>
+					Sem Fidelidade
+				</div>
+			</div>
 			<div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 space-y-6">
 				<div
 					className={`grid grid-cols-1 gap-6 ${
 						pricing.showMensalidade ? 'md:grid-cols-3' : 'md:grid-cols-2'
 					}`}
 				>
-					<div className="p-4 bg-green-50 rounded-xl border border-green-200 shadow-sm relative overflow-hidden">
-						<div className="absolute -right-2 -top-2 w-16 h-16 bg-green-100 rounded-full opacity-50"></div>
-						<p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-1">
-							Fidelidade
-						</p>
-						<div className="flex items-center gap-2 relative z-10">
-							<div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white">
-								<Check size={14} strokeWidth={3} />
-							</div>
-							<span className="text-lg font-bold text-green-900">
-								Sem Fidelidade
-							</span>
-						</div>
-					</div>
 					<div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
 						<p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
 							Valor da Adesão / Ativação
@@ -80,6 +78,26 @@ export const PricingSummary: React.FC<PricingSummaryProps> = ({
 							</p>
 						</div>
 					)}
+					<div className="p-4 bg-primary-50 rounded-xl border border-primary-200 shadow-sm">
+						<p className="text-xs font-bold text-primary-700 uppercase tracking-wider mb-1">
+							Valor Total a Pagar
+						</p>
+						<div className="flex items-baseline gap-2">
+							<p className="text-xl font-extrabold text-primary-700">
+								R$ {totalAPagar.toFixed(2).replace('.', ',')}
+							</p>
+							{totalComDesconto && (
+								<p className="text-sm text-slate-400 line-through">
+									R$ {totalBase.toFixed(2).replace('.', ',')}
+								</p>
+							)}
+						</div>
+						<p className="text-[10px] text-primary-600/80 font-medium mt-1">
+							{pricing.showMensalidade
+								? 'Mensalidade + adesão/ativação (1º pagamento)'
+								: 'Adesão/ativação (pagamento único)'}
+						</p>
+					</div>
 				</div>
 
 				{pricing.items.length > 0 && (

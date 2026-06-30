@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Store, MonitorSmartphone, Info, Ticket, Check, Truck } from 'lucide-react';
+import { Calendar, Store, MonitorSmartphone, Info, Truck } from 'lucide-react';
 import { FormData, BusinessType } from '../types';
 import { SearchableSelect } from './SearchableSelect';
 import {
@@ -7,8 +7,6 @@ import {
 	MAQUINAS,
 	LICENCAS,
 	TOTENS,
-	INSTANCIAS_EVENTO,
-	GESTAO_EVENTOS,
 } from '../constants';
 
 const inputClasses =
@@ -509,66 +507,6 @@ export const BusinessSection: React.FC<BusinessSectionProps> = ({
 									Essa taxa pode ser anulada com um cupom de desconto válido.
 								</span>
 							</div>
-						</div>
-
-						<div className="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-							<label className="flex items-start gap-3 cursor-pointer select-none">
-								<input
-									type="checkbox"
-									checked={!!formData.gestaoEventos}
-									onChange={(e) => {
-										onValueChange('gestaoEventos', e.target.checked);
-										if (!e.target.checked) {
-											onValueChange('qtdeInstancias', '');
-										}
-									}}
-									className="w-5 h-5 mt-0.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
-								/>
-								<span>
-									<span className="flex items-center gap-2 font-bold text-slate-800">
-										<Ticket size={18} className="text-primary-600" />
-										Adicionar Gestão de Eventos UAI PDV
-									</span>
-									<span className="block text-xs text-slate-500 mt-1 leading-relaxed">
-										Sistema dedicado de gestão para o evento, cobrado por instância
-										(telas):
-									</span>
-									<span className="mt-2 inline-flex flex-wrap items-center gap-2 text-xs">
-										<span className="font-semibold text-primary-700 bg-primary-50 border border-primary-100 rounded-md px-2 py-0.5">
-											R$ {GESTAO_EVENTOS.valorPorInstancia.toFixed(2).replace('.', ',')} / instância
-										</span>
-										<span className="font-semibold text-slate-700 bg-slate-100 border border-slate-200 rounded-md px-2 py-0.5">
-											+ R$ {GESTAO_EVENTOS.ativacao.toFixed(2).replace('.', ',')} de ativação
-										</span>
-									</span>
-									<span className="mt-2 flex flex-col gap-1">
-										{GESTAO_EVENTOS.recursos.map((recurso) => (
-											<span
-												key={recurso}
-												className="flex items-center gap-1.5 text-xs text-slate-600"
-											>
-												<Check size={13} className="text-green-600" />
-												{recurso}
-											</span>
-										))}
-									</span>
-								</span>
-							</label>
-
-							{formData.gestaoEventos && (
-								<div className="mt-4 animate-in fade-in slide-in-from-top-1 duration-200">
-									<SearchableSelect
-										label="Quantidade de instâncias (telas)"
-										name="qtdeInstancias"
-										value={formData.qtdeInstancias || ''}
-										options={INSTANCIAS_EVENTO}
-										placeholder="Selecione ou digite a quantidade"
-										onChange={onValueChange}
-										required
-										error={errors.qtdeInstancias}
-									/>
-								</div>
-							)}
 						</div>
 
 						<div className="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50/60 p-4">

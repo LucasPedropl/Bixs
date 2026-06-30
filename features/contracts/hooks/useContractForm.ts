@@ -8,7 +8,6 @@ import {
 	INSTANCIAS_EVENTO,
 	VALID_COUPONS,
 	AUTOATENDIMENTO,
-	GESTAO_EVENTOS,
 } from '../constants';
 import { isValidCPF, isValidCNPJ, isValidEmail, isValidPhone } from '../utils/validation';
 import { sendToWhatsApp } from '../services/whatsapp';
@@ -378,9 +377,6 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 			if (!formData.qtdeMaquinas)
 				newErrors.qtdeMaquinas = 'Quantidade de PDVs é obrigatória.';
 
-			if (formData.gestaoEventos && !formData.qtdeInstancias)
-				newErrors.qtdeInstancias = 'Informe a quantidade de instâncias da Gestão de Eventos.';
-
 			if (formData.comodato && !formData.qtdeComodato)
 				newErrors.qtdeComodato = 'Informe a quantidade de máquinas em comodato.';
 		} else if (businessType === 'autoatendimento') {
@@ -460,16 +456,6 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 				});
 			}
 
-			if (formData.gestaoEventos) {
-				const instancias = parseInt(formData.qtdeInstancias || '1') || 1;
-				items.push({
-					label: 'Gestão de Eventos UAI PDV',
-					quantidade: instancias,
-					mensalidadeTotal: 0,
-					adesaoTotal:
-						instancias * GESTAO_EVENTOS.valorPorInstancia + GESTAO_EVENTOS.ativacao,
-				});
-			}
 		} else if (isAuto) {
 			const qty = parseInt(formData.qtdeTotens || '1') || 1;
 
