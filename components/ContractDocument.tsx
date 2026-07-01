@@ -140,12 +140,14 @@ interface ContractData {
 	email: string;
 	responsavel: string;
 	cpfResponsavel: string;
+	dataNascimento?: string;
 	segmento: string;
 	// Campos opcionais dependendo do segmento
 	businessType?: 'evento' | 'mensalidade' | 'autoatendimento' | null;
 	dataInicio?: string;
 	dataFim?: string;
 	qtdeMaquinas?: string;
+	comodato?: boolean;
 	qtdeLicencas?: string;
 	qtdeTotens?: string;
 	controleEstoque?: boolean;
@@ -384,8 +386,11 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 							? `\n• Mensalidade: R$ ${formatCurrency(finalMensalidadeNum)};`
 							: ''}
 						{'\n'}• {labelQuantidade} : {quantidadePdvs || '1'};
-						{isEvent && data.comodato && data.qtdeComodato
-							? `\n• Máquinas Stone solicitadas em comodato: ${data.qtdeComodato};`
+						{isEvent && data.dataInicio && data.dataFim
+							? `\n• Período do evento: ${formatIsoDate(data.dataInicio)} a ${formatIsoDate(data.dataFim)};`
+							: ''}
+						{isEvent && data.comodato && data.qtdeMaquinas
+							? `\n• Máquinas Stone solicitadas em comodato: ${data.qtdeMaquinas};`
 							: ''}
 						{'\n'}• Total: R$ {totalValue}
 					</Text>
@@ -615,7 +620,7 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 						</View>
 					)}
 
-					{isEvent && data.comodato && data.qtdeComodato ? (
+					{isEvent && data.comodato && data.qtdeMaquinas ? (
 						<View
 							style={{
 								flexDirection: 'row',
@@ -632,7 +637,7 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 									textAlign: 'center',
 								}}
 							>
-								{data.qtdeComodato}
+								{data.qtdeMaquinas}
 							</Text>
 							{showMensalidade && (
 								<Text style={{ width: '20%', textAlign: 'right' }}>—</Text>
@@ -677,8 +682,9 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({ data }) => {
 					</View>
 
 					<Text style={{ marginTop: 10 }}>
-						*OBS: POS Stone NÃO inclusa no contrato, deve ser
-						contrato a parte
+						{isEvent && data.comodato
+							? '*OBS: Máquinas Stone em comodato sujeitas a média de taxas da adquirente. Não compõem os valores acima.'
+							: '*OBS: POS Stone NÃO inclusa no contrato, deve ser contrato a parte.'}
 					</Text>
 					<Text style={{ marginTop: 5 }}>
 						Após os pagamentos realizados e confirmados em conta do

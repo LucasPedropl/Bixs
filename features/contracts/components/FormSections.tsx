@@ -514,12 +514,7 @@ export const BusinessSection: React.FC<BusinessSectionProps> = ({
 								<input
 									type="checkbox"
 									checked={!!formData.comodato}
-									onChange={(e) => {
-										onValueChange('comodato', e.target.checked);
-										if (!e.target.checked) {
-											onValueChange('qtdeComodato', '');
-										}
-									}}
+									onChange={(e) => onValueChange('comodato', e.target.checked)}
 									className="w-5 h-5 mt-0.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
 								/>
 								<span>
@@ -528,26 +523,12 @@ export const BusinessSection: React.FC<BusinessSectionProps> = ({
 										Solicitar máquinas Stone em comodato
 									</span>
 									<span className="block text-xs text-slate-500 mt-1 leading-relaxed">
-										Smart POS da Stone em comodato (taxas: 2,69% crédito, 1,40%
-										débito, 0,50% PIX). Não soma nos valores do contrato.
+										Smart POS da Stone em comodato (média de taxas). A
+										quantidade segue a de PDVs informada acima. Não soma nos
+										valores do contrato.
 									</span>
 								</span>
 							</label>
-
-							{formData.comodato && (
-								<div className="mt-4 animate-in fade-in slide-in-from-top-1 duration-200">
-									<SearchableSelect
-										label="Quantidade de máquinas em comodato"
-										name="qtdeComodato"
-										value={formData.qtdeComodato || ''}
-										options={MAQUINAS}
-										placeholder="Selecione ou digite a quantidade"
-										onChange={onValueChange}
-										required
-										error={errors.qtdeComodato}
-									/>
-								</div>
-							)}
 						</div>
 					</>
 				)}

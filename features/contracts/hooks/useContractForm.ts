@@ -42,7 +42,6 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 		gestaoEventos: false,
 		qtdeInstancias: '',
 		comodato: false,
-		qtdeComodato: '',
 		cupomDesconto: '',
 		semFidelidade: true,
 	});
@@ -237,12 +236,6 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 				else delete newErrors.qtdeInstancias;
 			}
 
-			if (name === 'qtdeComodato' && typeof value === 'string') {
-				if (value && !MAQUINAS.includes(value))
-					newErrors.qtdeComodato = 'Quantidade inválida (1-30).';
-				else delete newErrors.qtdeComodato;
-			}
-
 			if (name === 'dataNascimento' && typeof value === 'string') {
 				if (!value) newErrors.dataNascimento = 'Data de nascimento é obrigatória.';
 				else delete newErrors.dataNascimento;
@@ -376,9 +369,6 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 
 			if (!formData.qtdeMaquinas)
 				newErrors.qtdeMaquinas = 'Quantidade de PDVs é obrigatória.';
-
-			if (formData.comodato && !formData.qtdeComodato)
-				newErrors.qtdeComodato = 'Informe a quantidade de máquinas em comodato.';
 		} else if (businessType === 'autoatendimento') {
 			if (!formData.qtdeTotens)
 				newErrors.qtdeTotens = 'Quantidade de totens é obrigatória.';

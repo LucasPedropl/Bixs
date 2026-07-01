@@ -28,9 +28,8 @@ export interface FormData {
 	// Gestão de Eventos (add-on do tipo Evento)
 	gestaoEventos?: boolean;
 	qtdeInstancias?: string;
-	// Máquinas em comodato (add-on informativo do tipo Evento, não soma nos valores)
+	// Máquinas em comodato (add-on informativo do tipo Evento, usa qtdeMaquinas, não soma nos valores)
 	comodato?: boolean;
-	qtdeComodato?: string;
 	cupomDesconto: string;
 	semFidelidade: boolean;
 }
