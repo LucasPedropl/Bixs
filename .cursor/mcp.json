@@ -1,0 +1,28 @@
+{
+	"mcpServers": {
+		"bixs-ai-mcp": {
+			"command": "node",
+			"args": [
+				"C:/codigo/pessoal/MCPs/apps/servidor-api/dist/index.js",
+				"--serverId",
+				"7d9cfbfa-dcb2-40f1-9181-5fd66fa0781c"
+			],
+			"env": {
+				"SUPABASE_URL": "https://xrjjzyfevbuuxeundgds.supabase.co",
+				"SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyamp6eWZldmJ1dXhldW5kZ2RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMTA5NzUsImV4cCI6MjA5NDY4Njk3NX0.DQh85lEn_zqBvEw3ZDeiXY5yCa3ZMTtybTZH70RxxpY"
+			}
+		},
+		"bixs-gateway-mcp": {
+			"command": "node",
+			"args": [
+				"C:/codigo/pessoal/MCPs/apps/servidor-api/dist/index.js",
+				"--serverId",
+				"5939aafe-c3ff-4e7c-8ffd-7eecad74baf0"
+			],
+			"env": {
+				"SUPABASE_URL": "https://xrjjzyfevbuuxeundgds.supabase.co",
+				"SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyamp6eWZldmJ1dXhldW5kZ2RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMTA5NzUsImV4cCI6MjA5NDY4Njk3NX0.DQh85lEn_zqBvEw3ZDeiXY5yCa3ZMTtybTZH70RxxpY"
+			}
+		}
+	}
+}

@@ -1,4 +1,8 @@
 import { FormData as ContractFormData } from '../types';
+import {
+	BIXS_API_ROUTES,
+	BIXS_AUTH_PAYLOAD,
+} from '../constants/bixsApi';
 
 /**
  * Envia o PDF do contrato assinado para o cliente e para a empresa via API de WhatsApp da Bixs.
@@ -17,20 +21,15 @@ export const sendToWhatsApp = async (
 	console.log('--- ENVIANDO PARA O WHATSAPP ---');
 	
 	// 1. Login na API Bixs
-	console.log('1. [TENTATIVA] Login na API Bixs: https://api.bixs.com.br/v1/auth/login');
+	console.log('1. [TENTATIVA] Login na API Bixs:', BIXS_API_ROUTES.authLogin);
 	let loginResponse;
 	try {
-		loginResponse = await fetch('https://api.bixs.com.br/v1/auth/login', {
+		loginResponse = await fetch(BIXS_API_ROUTES.authLogin, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 			},
-			body: JSON.stringify({
-				email: 'pedrolucasmota2005@gmail.com',
-				password: 'M6433vlks*',
-				mac: 'docs',
-				source: 'api_externa',
-			}),
+			body: JSON.stringify(BIXS_AUTH_PAYLOAD),
 		});
 	} catch (err) {
 		console.error('1. [FALHA] Erro de rede na requisição de login:', err);
@@ -63,11 +62,9 @@ export const sendToWhatsApp = async (
 	);
 
 	let uploadResponse;
-	console.log(
-		'2. [TENTATIVA] Upload do PDF do contrato: https://api.bixs.com.br/v1/api/upload/media'
-	);
+	console.log('2. [TENTATIVA] Upload do PDF do contrato:', BIXS_API_ROUTES.uploadMedia);
 	try {
-		uploadResponse = await fetch('https://api.bixs.com.br/v1/api/upload/media', {
+		uploadResponse = await fetch(BIXS_API_ROUTES.uploadMedia, {
 			method: 'POST',
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -99,19 +96,14 @@ export const sendToWhatsApp = async (
 
 	// 3. Buscar Instância Ativa do WhatsApp
 	let instancesResponse;
-	console.log(
-		'3. [TENTATIVA] Buscar instâncias ativas do WhatsApp: https://api.bixs.com.br/v1/api/message/instances'
-	);
+	console.log('3. [TENTATIVA] Buscar instâncias ativas do WhatsApp:', BIXS_API_ROUTES.instances);
 	try {
-		instancesResponse = await fetch(
-			'https://api.bixs.com.br/v1/api/message/instances',
-			{
-				headers: {
-					Authorization: `Bearer ${token}`,
-					accept: 'application/json',
-				},
-			}
-		);
+		instancesResponse = await fetch(BIXS_API_ROUTES.instances, {
+			headers: {
+				Authorization: `Bearer ${token}`,
+				accept: 'application/json',
+			},
+		});
 	} catch (err) {
 		console.error('3. [FALHA] Erro de rede na requisição de instâncias:', err);
 		throw new Error('Falha de rede ao buscar instâncias ativas do WhatsApp.');
@@ -156,22 +148,20 @@ export const sendToWhatsApp = async (
 	};
 	
 	console.log(
-		`4. [TENTATIVA] Enviar mensagem para a empresa (${companyPhone}): https://api.bixs.com.br/v1/api/message/messages/send`,
+		`4. [TENTATIVA] Enviar mensagem para a empresa (${companyPhone}):`,
+		BIXS_API_ROUTES.messagesSend,
 		companyPayload
 	);
 	try {
-		messageResponse = await fetch(
-			'https://api.bixs.com.br/v1/api/message/messages/send',
-			{
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${token}`,
-					'Content-Type': 'application/json',
-					accept: 'application/json',
-				},
-				body: JSON.stringify(companyPayload),
-			}
-		);
+		messageResponse = await fetch(BIXS_API_ROUTES.messagesSend, {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${token}`,
+				'Content-Type': 'application/json',
+				accept: 'application/json',
+			},
+			body: JSON.stringify(companyPayload),
+		});
 	} catch (err) {
 		console.error('4. [FALHA] Erro de rede ao enviar mensagem p/ empresa:', err);
 		throw new Error('Falha de rede ao enviar mensagem para a empresa.');
@@ -209,22 +199,20 @@ export const sendToWhatsApp = async (
 	};
 	
 	console.log(
-		`5. [TENTATIVA] Enviar mensagem para o cliente (${clientPhoneWithCountry}): https://api.bixs.com.br/v1/api/message/messages/send`,
+		`5. [TENTATIVA] Enviar mensagem para o cliente (${clientPhoneWithCountry}):`,
+		BIXS_API_ROUTES.messagesSend,
 		clientPayload
 	);
 	try {
-		clientMessageResponse = await fetch(
-			'https://api.bixs.com.br/v1/api/message/messages/send',
-			{
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${token}`,
-					'Content-Type': 'application/json',
-					accept: 'application/json',
-				},
-				body: JSON.stringify(clientPayload),
-			}
-		);
+		clientMessageResponse = await fetch(BIXS_API_ROUTES.messagesSend, {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${token}`,
+				'Content-Type': 'application/json',
+				accept: 'application/json',
+			},
+			body: JSON.stringify(clientPayload),
+		});
 	} catch (err) {
 		console.error('5. [FALHA] Erro de rede ao enviar mensagem p/ cliente:', err);
 		throw new Error('Falha de rede ao enviar mensagem para o cliente.');

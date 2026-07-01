@@ -1,27 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
+import {
+	BIXS_API_ROUTES,
+	BIXS_AUTH_PAYLOAD,
+} from '../features/contracts/constants/bixsApi';
 
-// =========================================================================
-// CONFIGURAÇÃO RÁPIDA (Autenticação Automática)
-// =========================================================================
-// 1. Configure aqui a rota e os dados para obter o token automaticamente
-const AUTH_URL = 'https://api.bixs.com.br/v1/auth/login';
-const AUTH_PAYLOAD = {
-	email: 'pedrolucasmota2005@gmail.com',
-	password: 'M6433vlks*',
-	mac: 'docs',
-	source: 'api_externa',
-};
-
-// 2. Mudando FORCE_NEW_INSTANCE para true, o código irá ignorar instâncias
-//    existentes e criar uma nova toda vez (útil para mudar o qrcode rapidamente).
+// Mudando FORCE_NEW_INSTANCE para true, ignora instâncias existentes e cria uma nova.
 const FORCE_NEW_INSTANCE = false;
-
-// 3. Nome usado para criar a nova instância (se necessário)
 const INSTANCE_NAME = 'whatsapp-' + Math.floor(Math.random() * 1000);
-
-// =========================================================================
-
-const BASE_URL = 'https://api.bixs.com.br/v1/api/message/instances';
+const INSTANCES_URL = BIXS_API_ROUTES.instances;
 
 const WhatsappConnect: React.FC = () => {
 	const [token, setToken] = useState<string | null>(null);
@@ -36,7 +22,7 @@ const WhatsappConnect: React.FC = () => {
 	const deleteInstance = async (authToken: string, id: number) => {
 		try {
 			setStatusMsg(`Excluindo instância ${id}...`);
-			await fetch(`${BASE_URL}/${id}`, {
+			await fetch(`${INSTANCES_URL}/${id}`, {
 				method: 'DELETE',
 				headers: {
 					accept: 'application/json',
@@ -59,7 +45,7 @@ const WhatsappConnect: React.FC = () => {
 		try {
 			setIsLoading(true);
 			// 1. Check Status
-			const statusRes = await fetch(`${BASE_URL}/${id}/status`, {
+			const statusRes = await fetch(`${INSTANCES_URL}/${id}/status`, {
 				headers: {
 					accept: 'application/json',
 					Authorization: `Bearer ${authToken}`,
@@ -87,7 +73,7 @@ const WhatsappConnect: React.FC = () => {
 
 			// 2. Gerar QrCode
 			setStatusMsg(`Gerando QRCode...`);
-			const qrRes = await fetch(`${BASE_URL}/${id}/qrcode`, {
+			const qrRes = await fetch(`${INSTANCES_URL}/${id}/qrcode`, {
 				headers: {
 					accept: 'application/json',
 					Authorization: `Bearer ${authToken}`,
@@ -131,13 +117,13 @@ const WhatsappConnect: React.FC = () => {
 		try {
 			// --- 0. Autenticação para pegar o Token ---
 			setStatusMsg('Autenticando...');
-			const authRes = await fetch(AUTH_URL, {
+			const authRes = await fetch(BIXS_API_ROUTES.authLogin, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 					accept: 'application/json',
 				},
-				body: JSON.stringify(AUTH_PAYLOAD),
+				body: JSON.stringify(BIXS_AUTH_PAYLOAD),
 			});
 
 			if (!authRes.ok)
@@ -160,7 +146,7 @@ const WhatsappConnect: React.FC = () => {
 			// --- 1. Buscar instâncias, se não formos forçar uma nova ---
 			if (!forceNew && !FORCE_NEW_INSTANCE) {
 				setStatusMsg('Buscando instâncias existentes...');
-				const res = await fetch(BASE_URL, { headers });
+				const res = await fetch(INSTANCES_URL, { headers });
 				if (!res.ok) throw new Error('Falha ao buscar instâncias');
 
 				const data: any[] = await res.json();
@@ -177,7 +163,7 @@ const WhatsappConnect: React.FC = () => {
 				setStatusMsg('Criando nova instância...');
 				const instanceName =
 					INSTANCE_NAME + '-' + Math.floor(Math.random() * 10000);
-				const postRes = await fetch(BASE_URL, {
+				const postRes = await fetch(INSTANCES_URL, {
 					method: 'POST',
 					headers,
 					body: JSON.stringify({ name: instanceName }),
