@@ -1,8 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import {
 	BIXS_API_ROUTES,
 	BIXS_AUTH_PAYLOAD,
 } from '../features/contracts/constants/bixsApi';
+
+const parseApiError = async (res: Response, fallback: string) => {
+	try {
+		const body = await res.json();
+		return body.error || body.message || fallback;
+	} catch {
+		return `${fallback} (HTTP ${res.status})`;
+	}
+};
 
 // Mudando FORCE_NEW_INSTANCE para true, ignora instâncias existentes e cria uma nova.
 const FORCE_NEW_INSTANCE = false;
@@ -16,6 +26,7 @@ const WhatsappConnect: React.FC = () => {
 	const [instanceId, setInstanceId] = useState<number | null>(null);
 	const [connectionStatus, setConnectionStatus] = useState<string>('');
 	const [isLoading, setIsLoading] = useState(false);
+	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
 	const activeRef = useRef(true);
 
@@ -81,7 +92,12 @@ const WhatsappConnect: React.FC = () => {
 			});
 
 			if (!qrRes.ok) {
-				throw new Error('Falha ao obter dados do QRCode da instância');
+				throw new Error(
+					await parseApiError(
+						qrRes,
+						'Falha ao obter dados do QRCode da instância',
+					),
+				);
 			}
 
 			const qrData = await qrRes.json();
@@ -95,17 +111,21 @@ const WhatsappConnect: React.FC = () => {
 
 			if (activeRef.current) {
 				setQrCodeData(rawCode);
+				setErrorMsg(null);
 				setStatusMsg(`QRCode pronto! Escaneie com o seu WhatsApp.`);
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error(err);
 			if (activeRef.current) {
-				setStatusMsg(`Erro no QRCode. Criando nova instância...`);
-				// Cria nova instância por causa do erro no qrcode
-				if (instanceId) {
-					await deleteInstance(authToken, instanceId);
-				}
-				setupWhatsapp(true);
+				const message =
+					err instanceof Error
+						? err.message
+						: 'Falha ao gerar QRCode';
+				setErrorMsg(message);
+				setQrCodeData(null);
+				setStatusMsg(
+					'Erro ao gerar QRCode. Tente atualizar ou criar nova instância.',
+				);
 			}
 		} finally {
 			setIsLoading(false);
@@ -114,6 +134,7 @@ const WhatsappConnect: React.FC = () => {
 
 	const setupWhatsapp = async (forceNew = false) => {
 		setIsLoading(true);
+		setErrorMsg(null);
 		try {
 			// --- 0. Autenticação para pegar o Token ---
 			setStatusMsg('Autenticando...');
@@ -126,8 +147,11 @@ const WhatsappConnect: React.FC = () => {
 				body: JSON.stringify(BIXS_AUTH_PAYLOAD),
 			});
 
-			if (!authRes.ok)
-				throw new Error('Falha ao autenticar para pegar o token');
+			if (!authRes.ok) {
+				throw new Error(
+					await parseApiError(authRes, 'Falha ao autenticar'),
+				);
+			}
 			const authData = await authRes.json();
 			const authToken = authData.token || authData.access_token;
 
@@ -147,7 +171,11 @@ const WhatsappConnect: React.FC = () => {
 			if (!forceNew && !FORCE_NEW_INSTANCE) {
 				setStatusMsg('Buscando instâncias existentes...');
 				const res = await fetch(INSTANCES_URL, { headers });
-				if (!res.ok) throw new Error('Falha ao buscar instâncias');
+				if (!res.ok) {
+					throw new Error(
+						await parseApiError(res, 'Falha ao buscar instâncias'),
+					);
+				}
 
 				const data: any[] = await res.json();
 				if (data && data.length > 0) {
@@ -169,8 +197,11 @@ const WhatsappConnect: React.FC = () => {
 					body: JSON.stringify({ name: instanceName }),
 				});
 
-				if (!postRes.ok)
-					throw new Error('Falha ao criar nova instância');
+				if (!postRes.ok) {
+					throw new Error(
+						await parseApiError(postRes, 'Falha ao criar instância'),
+					);
+				}
 				const postData = await postRes.json();
 				targetId = postData.id;
 				setStatusMsg(`Nova instância criada (${targetId}).`);
@@ -182,9 +213,14 @@ const WhatsappConnect: React.FC = () => {
 
 			// --- 3. Carregar Status e QRCode inicial ---
 			await checkStatusAndLoadQrCode(authToken, targetId);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error(err);
-			if (activeRef.current) setStatusMsg(`Erro: ${err.message}`);
+			if (activeRef.current) {
+				const message =
+					err instanceof Error ? err.message : 'Erro inesperado';
+				setErrorMsg(message);
+				setStatusMsg(`Erro: ${message}`);
+			}
 		} finally {
 			if (activeRef.current) setIsLoading(false);
 		}
@@ -239,15 +275,19 @@ const WhatsappConnect: React.FC = () => {
 					</div>
 				)}
 
-				{qrCodeData &&
-				connectionStatus?.toUpperCase() !== 'OPEN' &&
-				connectionStatus?.toUpperCase() !== 'CONNECTED' ? (
+				{errorMsg ? (
+					<div className="flex flex-col items-center justify-center h-[250px] w-[250px] bg-red-50 rounded-lg border border-red-200 mb-4 px-4">
+						<p className="text-red-700 text-sm font-medium text-center">
+							{errorMsg}
+						</p>
+					</div>
+				) : qrCodeData &&
+				  connectionStatus?.toUpperCase() !== 'OPEN' &&
+				  connectionStatus?.toUpperCase() !== 'CONNECTED' ? (
 					<div className="flex flex-col items-center">
-						<img
-							src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeData)}`}
-							alt="QR Code"
-							className="mb-4 w-[250px] h-[250px] border p-2 bg-white rounded-lg shadow-sm"
-						/>
+						<div className="mb-4 border p-2 bg-white rounded-lg shadow-sm">
+							<QRCodeSVG value={qrCodeData} size={250} />
+						</div>
 						<p className="text-sm text-slate-600 px-4 mt-2 break-all max-w-sm">
 							Escaneie o QRCode acima com o seu WhatsApp.
 						</p>
