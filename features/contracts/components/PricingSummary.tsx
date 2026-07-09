@@ -168,6 +168,12 @@ export const PricingSummary: React.FC<PricingSummaryProps> = ({
 								e.target.value.toUpperCase()
 							)
 						}
+						onBlur={(e) => {
+							const trimmed = e.target.value.replace(/\s+$/, '');
+							if (trimmed !== formData.cupomDesconto) {
+								onValueChange('cupomDesconto', trimmed.toUpperCase());
+							}
+						}}
 						className={`${inputClasses} uppercase`}
 						placeholder="Digite seu cupom aqui"
 					/>

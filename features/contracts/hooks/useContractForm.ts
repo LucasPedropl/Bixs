@@ -9,7 +9,7 @@ import {
 	VALID_COUPONS,
 	AUTOATENDIMENTO,
 } from '../constants';
-import { isValidCPF, isValidCNPJ, isValidEmail, isValidPhone } from '../utils/validation';
+import { isValidCPF, isValidCNPJ, isValidEmail, isValidPhone, normalizeCouponCode } from '../utils/validation';
 import { sendToWhatsApp } from '../services/whatsapp';
 import { pdf, DocumentProps } from '@react-pdf/renderer';
 import React from 'react';
@@ -509,7 +509,11 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 		const equipamentosEvento = parseInt(formData.qtdeMaquinas || '1') || 1;
 
 		if (formData.cupomDesconto) {
-			const cupom = VALID_COUPONS[formData.cupomDesconto.toUpperCase()];
+			const couponCode = normalizeCouponCode(formData.cupomDesconto);
+			if (!couponCode) {
+				mensagemCupom = 'Cupom inválido ou expirado.';
+			} else {
+			const cupom = VALID_COUPONS[couponCode];
 			if (cupom) {
 				const allowedForEvent = cupom.type === 'adesao' || cupom.type === 'evento_custom';
 				const allowedForAuto = cupom.type === 'adesao';
@@ -534,18 +538,27 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 						economia =
 							baseAdesao - finalAdesao + (baseMensalidade - finalMensalidade);
 					} else if (cupom.type === 'evento_custom') {
-						// Isenção da taxa de ativação (R$ 20 por PDV) + desconto por equipamento.
-						const ativacaoEvento = equipamentosEvento * 20;
-						const descontoEquipamento =
-							equipamentosEvento * (cupom.descontoMensalPorPdv || 0);
-						finalAdesao = baseAdesao - ativacaoEvento - descontoEquipamento;
-						if (finalAdesao < 0) finalAdesao = 0;
+						if (cupom.valorPorPdv != null && cupom.ativacaoPorPdv != null) {
+							const adesaoPorPdvBase = equipamentosEvento * 89 + equipamentosEvento * 20;
+							const adicionalDuracao = baseAdesao - adesaoPorPdvBase;
+							finalAdesao =
+								equipamentosEvento * (cupom.valorPorPdv + cupom.ativacaoPorPdv) +
+								Math.max(0, adicionalDuracao);
+						} else {
+							// Legado: isenção da taxa de ativação (R$ 20/PDV) + desconto por equipamento.
+							const ativacaoEvento = equipamentosEvento * 20;
+							const descontoEquipamento =
+								equipamentosEvento * (cupom.descontoMensalPorPdv || 0);
+							finalAdesao = baseAdesao - ativacaoEvento - descontoEquipamento;
+							if (finalAdesao < 0) finalAdesao = 0;
+						}
 						economia = baseAdesao - finalAdesao;
 					}
 					mensagemCupom = `Cupom válido! Você economizou R$ ${economia.toFixed(2).replace('.', ',')}. Este é um cupom de uso único e não será mais válido para este usuário após a geração.`;
 				}
 			} else {
 				mensagemCupom = 'Cupom inválido ou expirado.';
+			}
 			}
 		}
 

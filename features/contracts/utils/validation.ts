@@ -71,3 +71,14 @@ export const isValidPhone = (phone: string) => {
 
 	return true;
 };
+
+/**
+ * Normaliza o código do cupom digitado: ignora espaços no final.
+ * Retorna null se houver texto após um espaço interno (formato inválido).
+ */
+export const normalizeCouponCode = (value: string): string | null => {
+	const withoutTrailingSpaces = value.replace(/\s+$/, '');
+	if (!withoutTrailingSpaces) return null;
+	if (/\s/.test(withoutTrailingSpaces)) return null;
+	return withoutTrailingSpaces.toUpperCase();
+};
