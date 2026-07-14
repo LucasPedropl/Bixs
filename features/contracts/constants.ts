@@ -81,6 +81,12 @@ export const VALID_COUPONS: Record<string, CouponDefinition> = {
 		ativacaoPorPdv: 10,
 		description: 'Evento: R$ 79,00 por máquina + R$ 10,00 de ativação por máquina',
 	},
+	AD35G9: {
+		type: 'custom',
+		adesao: 200,
+		mensalidade: 189.9,
+		description: 'Mensalidade R$ 189,90 e Adesão R$ 200,00',
+	},
 };
 
 /**
