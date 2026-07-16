@@ -1,20 +1,37 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Bixs - Diretrizes de Desenvolvimento e Arquitetura
 
-# Run and deploy your AI Studio app
+Bem-vindo ao **Bixs**! Este documento serve como guia de onboarding técnico para desenvolvedores e agentes de IA, descrevendo a stack tecnológica, a estrutura e o fluxo do portal de integração de pagamentos.
 
-This contains everything you need to run your app locally.
+---
 
-View your app in AI Studio: https://ai.studio/apps/drive/1ejPRd1Fq045xBy26828_waQJiIxII4XO
+## 1. Visão Geral do Projeto
+O Bixs é a aplicação encarregada da gestão de transações, tokenização e autorização de pagamentos, servindo como portal financeiro e gateway central de conciliação para os estabelecimentos comerciais integrados à UaiPDV.
 
-## Run Locally
+---
 
-**Prerequisites:**  Node.js
+## 2. Stack Tecnológica
+* **Interface (Core)**: React (Vite) & TypeScript.
+* **Estilização**: CSS modular e utilitários globais (`global.css`).
+* **Estado e Domínios**: Mapeado através de features e componentes focados em segurança transacional.
 
+---
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 3. Estrutura de Diretórios
+```
+apps/Bixs/
+├── components/           # Componentes UI reutilizáveis
+├── pages/                # Páginas da aplicação (Telas do portal e fluxos)
+├── features/             # Submódulos e fluxos específicos por domínio
+├── bix/                  # Lógicas internas e rotinas de controle do Bixs
+├── utils/                # Utilitários de formatação e cálculos
+├── types.ts              # Interfaces e contratos TypeScript compartilhados
+├── App.tsx               # Roteador e ponto de entrada da aplicação
+├── package.json          # Dependências e scripts npm
+└── vite.config.ts        # Configurações do Vite
+```
+
+---
+
+## 4. Diretrizes de Atuação
+* **Segurança**: Como este projeto lida diretamente com credenciais, chaves e tokens transacionais, garanta que chaves privadas de homologação ou credenciais mockadas nunca sejam enviadas ao repositório git. Utilize variáveis de ambiente parametrizadas no `.env.local`.
+* **Separação de Domínios**: Insira novos fluxos financeiros preferencialmente sob a pasta `features/` para manter a organização orientada a módulos.
