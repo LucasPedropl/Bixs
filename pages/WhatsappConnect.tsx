@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
 	BIXS_API_ROUTES,
-	BIXS_AUTH_PAYLOAD,
+	getBixsAuthPayload,
 } from '../features/contracts/constants/bixsApi';
 
 const parseApiError = async (res: Response, fallback: string) => {
@@ -144,7 +144,7 @@ const WhatsappConnect: React.FC = () => {
 					'Content-Type': 'application/json',
 					accept: 'application/json',
 				},
-				body: JSON.stringify(BIXS_AUTH_PAYLOAD),
+				body: JSON.stringify(getBixsAuthPayload()),
 			});
 
 			if (!authRes.ok) {

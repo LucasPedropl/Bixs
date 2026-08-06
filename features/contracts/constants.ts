@@ -87,6 +87,12 @@ export const VALID_COUPONS: Record<string, CouponDefinition> = {
 		mensalidade: 189.9,
 		description: 'Mensalidade R$ 189,90 e Adesão R$ 200,00',
 	},
+	MEN100189: {
+		type: 'custom',
+		adesao: 100,
+		mensalidade: 189.9,
+		description: 'Mensalidade R$ 189,90 e Ativação R$ 100,00',
+	},
 };
 
 /**

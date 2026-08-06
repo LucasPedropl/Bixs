@@ -1,5 +1,6 @@
 /** Base da API Gateway Bixs (Swagger: /docs/gateway/doc.json) */
-export const BIXS_API_BASE = 'https://api.bixs.com.br';
+export const BIXS_API_BASE =
+	import.meta.env.VITE_BIXS_API_BASE ?? 'https://api.bixs.com.br';
 
 /**
  * Rotas oficiais via Gateway + Message Service (Swagger: /docs/message/doc.json).
@@ -18,9 +19,20 @@ export const BIXS_API_ROUTES = {
  */
 export const BIXS_AUTH_SOURCE = 'api_externa';
 
-export const BIXS_AUTH_PAYLOAD = {
-	email: 'pedrolucasmota2005@gmail.com',
-	password: 'plm200510',
-	mac: 'docs',
-	source: BIXS_AUTH_SOURCE,
-};
+export function getBixsAuthPayload() {
+	const email = import.meta.env.VITE_BIXS_API_EMAIL;
+	const password = import.meta.env.VITE_BIXS_API_PASSWORD;
+
+	if (!email || !password) {
+		throw new Error(
+			'Credenciais Bixs não configuradas. Defina VITE_BIXS_API_EMAIL e VITE_BIXS_API_PASSWORD no .env.local',
+		);
+	}
+
+	return {
+		email,
+		password,
+		mac: 'bixs-app',
+		source: BIXS_AUTH_SOURCE,
+	};
+}

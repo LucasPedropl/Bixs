@@ -1,7 +1,7 @@
 import { FormData as ContractFormData } from '../types';
 import {
 	BIXS_API_ROUTES,
-	BIXS_AUTH_PAYLOAD,
+	getBixsAuthPayload,
 } from '../constants/bixsApi';
 
 /**
@@ -29,7 +29,7 @@ export const sendToWhatsApp = async (
 			headers: {
 				'Content-Type': 'application/json',
 			},
-			body: JSON.stringify(BIXS_AUTH_PAYLOAD),
+			body: JSON.stringify(getBixsAuthPayload()),
 		});
 	} catch (err) {
 		console.error('1. [FALHA] Erro de rede na requisição de login:', err);
