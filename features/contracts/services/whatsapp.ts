@@ -1,102 +1,88 @@
 import { FormData as ContractFormData } from '../types';
 import {
 	BIXS_API_ROUTES,
+	BIXS_COMPANY_WHATSAPP_E164,
 	getBixsAuthPayload,
 } from '../constants/bixsApi';
+import { sendWhatsAppDocument } from './sendWhatsAppDocument';
+import { uploadContractPdf } from './uploadContractMedia';
+
+type BixsLoginResponse = {
+	token?: string;
+	access_token?: string;
+	user_id?: string;
+};
+
+function slugifyContratante(contratante: string): string {
+	return contratante.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+}
+
+function readActiveInstanceId(raw: unknown): string {
+	if (!Array.isArray(raw) || raw.length === 0) {
+		throw new Error(
+			'Nenhuma instância do WhatsApp encontrada conectada ao gateway. Por favor, conecte primeiro.',
+		);
+	}
+	const first = raw[0];
+	if (!first || typeof first !== 'object') {
+		throw new Error('Resposta inválida ao listar instâncias do WhatsApp.');
+	}
+	const id = (first as Record<string, unknown>).id;
+	if (typeof id === 'string' && id.length > 0) return id;
+	if (typeof id === 'number' && Number.isFinite(id)) return String(id);
+	throw new Error('Instância WhatsApp sem id.');
+}
 
 /**
- * Envia o PDF do contrato assinado para o cliente e para a empresa via API de WhatsApp da Bixs.
- * 
- * @param pdfBlob PDF gerado em formato Blob.
- * @param data Dados do formulário de contrato.
- * @param isDevEnvironment Indica se está rodando em ambiente de desenvolvimento.
- * @param testPhone Telefone de teste do ambiente de desenvolvimento.
+ * Sobe o PDF no media-service e envia o mesmo documento via document_url
+ * para a empresa e para o cliente.
  */
 export const sendToWhatsApp = async (
 	pdfBlob: Blob,
 	data: ContractFormData,
 	isDevEnvironment: boolean,
-	testPhone: string
+	testPhone: string,
 ): Promise<void> => {
 	console.log('--- ENVIANDO PARA O WHATSAPP ---');
-	
-	// 1. Login na API Bixs
+
 	console.log('1. [TENTATIVA] Login na API Bixs:', BIXS_API_ROUTES.authLogin);
-	let loginResponse;
+	let loginResponse: Response;
 	try {
 		loginResponse = await fetch(BIXS_API_ROUTES.authLogin, {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(getBixsAuthPayload()),
 		});
 	} catch (err) {
 		console.error('1. [FALHA] Erro de rede na requisição de login:', err);
-		throw new Error(
-			'Falha de rede no login (possível erro de CORS ou servidor offline).'
-		);
+		throw new Error('Falha de rede no login (possível erro de CORS ou servidor offline).');
 	}
 
 	if (!loginResponse.ok) {
 		console.error(`1. [FALHA] Login falhou. Status HTTP: ${loginResponse.status}`);
-		throw new Error(
-			`Falha no login da API Bixs. Status: ${loginResponse.status}`
-		);
+		throw new Error(`Falha no login da API Bixs. Status: ${loginResponse.status}`);
 	}
-	const loginData = await loginResponse.json();
-	const token = loginData.token;
-
+	const loginData = (await loginResponse.json()) as BixsLoginResponse;
+	const token = loginData.access_token ?? loginData.token;
+	const ownerId = loginData.user_id;
 	if (!token) {
-		console.error('1. [FALHA] Token não retornado no corpo da resposta do login.');
 		throw new Error('Token não retornado pela API Bixs.');
+	}
+	if (!ownerId) {
+		throw new Error('user_id não retornado pela API Bixs.');
 	}
 	console.log('1. [SUCESSO] Login realizado com sucesso. Token obtido.');
 
-	// 2. Upload do PDF do contrato
-	const uploadFormData = new FormData();
-	uploadFormData.append(
-		'file',
+	const slug = slugifyContratante(data.contratante);
+	const documentUrl = await uploadContractPdf({
+		token,
+		ownerId,
 		pdfBlob,
-		`Contrato_BIXS_${data.contratante.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`
-	);
+		fileName: `Contrato_BIXS_${slug}.pdf`,
+	});
 
-	let uploadResponse;
-	console.log('2. [TENTATIVA] Upload do PDF do contrato:', BIXS_API_ROUTES.uploadMedia);
-	try {
-		uploadResponse = await fetch(BIXS_API_ROUTES.uploadMedia, {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${token}`,
-				accept: 'application/json',
-			},
-			body: uploadFormData,
-		});
-	} catch (err) {
-		console.error('2. [FALHA] Erro de rede na requisição de upload:', err);
-		throw new Error('Falha de rede no upload da mídia do contrato.');
-	}
-
-	if (!uploadResponse.ok) {
-		console.error(
-			`2. [FALHA] Upload do contrato falhou. Status HTTP: ${uploadResponse.status}`
-		);
-		throw new Error(
-			`Falha no upload do contrato. Status: ${uploadResponse.status}`
-		);
-	}
-	const uploadData = await uploadResponse.json();
-	const mediaUrl = uploadData.media_url;
-
-	if (!mediaUrl) {
-		console.error('2. [FALHA] URL da mídia não retornada no upload.');
-		throw new Error('URL da mídia não retornada pela API.');
-	}
-	console.log('2. [SUCESSO] Upload realizado com sucesso. URL:', mediaUrl);
-
-	// 3. Buscar Instância Ativa do WhatsApp
-	let instancesResponse;
 	console.log('3. [TENTATIVA] Buscar instâncias ativas do WhatsApp:', BIXS_API_ROUTES.instances);
+	let instancesResponse: Response;
 	try {
 		instancesResponse = await fetch(BIXS_API_ROUTES.instances, {
 			headers: {
@@ -109,75 +95,13 @@ export const sendToWhatsApp = async (
 		throw new Error('Falha de rede ao buscar instâncias ativas do WhatsApp.');
 	}
 	if (!instancesResponse.ok) {
-		console.error(
-			`3. [FALHA] Busca de instâncias falhou. Status HTTP: ${instancesResponse.status}`
-		);
-		throw new Error(
-			`Falha ao buscar instâncias. Status: ${instancesResponse.status}`
-		);
+		throw new Error(`Falha ao buscar instâncias. Status: ${instancesResponse.status}`);
 	}
-	const instancesData = await instancesResponse.json();
-	if (!instancesData || instancesData.length === 0) {
-		console.error('3. [FALHA] Nenhuma instância retornada pela API.');
-		throw new Error(
-			'Nenhuma instância do WhatsApp encontrada conectada ao gateway. Por favor, conecte primeiro.'
-		);
-	}
-	
-	const activeInstanceId = instancesData[0].id;
+	const activeInstanceId = readActiveInstanceId(await instancesResponse.json());
 	console.log('3. [SUCESSO] Instância conectada encontrada. ID:', activeInstanceId);
 
-	// 4. Enviar Mensagem para a Empresa
-	const devPhoneWithCountry = testPhone.startsWith('55')
-		? testPhone
-		: `55${testPhone}`;
-	const companyPhone = isDevEnvironment
-		? devPhoneWithCountry
-		: '553172532104';
-
-	let messageResponse;
-	const companyPayload = {
-		audio_url: '',
-		document_url: mediaUrl,
-		image_url: '',
-		instance_id: activeInstanceId,
-		message: `Novo contrato gerado e assinado!\n\n*Contratante:* ${data.contratante}\n*CNPJ/CPF:* ${data.cpfCnpj}\n*Segmento:* ${data.segmento}`,
-		to: companyPhone,
-		to_name: data.contratante,
-		video_url: '',
-	};
-	
-	console.log(
-		`4. [TENTATIVA] Enviar mensagem para a empresa (${companyPhone}):`,
-		BIXS_API_ROUTES.messagesSend,
-		companyPayload
-	);
-	try {
-		messageResponse = await fetch(BIXS_API_ROUTES.messagesSend, {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${token}`,
-				'Content-Type': 'application/json',
-				accept: 'application/json',
-			},
-			body: JSON.stringify(companyPayload),
-		});
-	} catch (err) {
-		console.error('4. [FALHA] Erro de rede ao enviar mensagem p/ empresa:', err);
-		throw new Error('Falha de rede ao enviar mensagem para a empresa.');
-	}
-
-	if (!messageResponse.ok) {
-		console.error(
-			`4. [FALHA] Falha ao enviar mensagem para a empresa. Status HTTP: ${messageResponse.status}`
-		);
-		throw new Error(
-			`Falha ao enviar mensagem para a empresa via WhatsApp. Status: ${messageResponse.status}`
-		);
-	}
-	console.log('4. [SUCESSO] Mensagem para a empresa enviada com sucesso!');
-
-	// 5. Enviar Mensagem para o Cliente
+	const devPhoneWithCountry = testPhone.startsWith('55') ? testPhone : `55${testPhone}`;
+	const companyPhone = isDevEnvironment ? devPhoneWithCountry : BIXS_COMPANY_WHATSAPP_E164;
 	const cleanClientPhone = data.contato.replace(/\D/g, '');
 	const clientPhoneWithCountry = isDevEnvironment
 		? devPhoneWithCountry
@@ -185,47 +109,25 @@ export const sendToWhatsApp = async (
 			? cleanClientPhone
 			: `55${cleanClientPhone}`;
 
-	let clientMessageResponse;
-	const clientPayload = {
-		audio_url: '',
-		document_url: mediaUrl,
-		image_url: '',
-		instance_id: activeInstanceId,
+	await sendWhatsAppDocument({
+		token,
+		instanceId: activeInstanceId,
+		to: companyPhone,
+		toName: data.contratante,
+		message: `Novo contrato gerado e assinado!\n\n*Contratante:* ${data.contratante}\n*CNPJ/CPF:* ${data.cpfCnpj}\n*Segmento:* ${data.segmento}`,
+		documentUrl,
+		logLabel: 'mensagem para a empresa',
+	});
+	await sendWhatsAppDocument({
+		token,
+		instanceId: activeInstanceId,
+		to: clientPhoneWithCountry,
+		toName: data.contratante,
 		message:
 			'*Confirmação de Contrato – Empresa BIXs*\n\nA Empresa BIXs confirma o recebimento do contrato, juntamente com os dados do contratante e documentos apresentados, sendo estes cópias fiéis dos originais.',
-		to: clientPhoneWithCountry,
-		to_name: data.contratante,
-		video_url: '',
-	};
-	
-	console.log(
-		`5. [TENTATIVA] Enviar mensagem para o cliente (${clientPhoneWithCountry}):`,
-		BIXS_API_ROUTES.messagesSend,
-		clientPayload
-	);
-	try {
-		clientMessageResponse = await fetch(BIXS_API_ROUTES.messagesSend, {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${token}`,
-				'Content-Type': 'application/json',
-				accept: 'application/json',
-			},
-			body: JSON.stringify(clientPayload),
-		});
-	} catch (err) {
-		console.error('5. [FALHA] Erro de rede ao enviar mensagem p/ cliente:', err);
-		throw new Error('Falha de rede ao enviar mensagem para o cliente.');
-	}
+		documentUrl,
+		logLabel: 'mensagem para o cliente',
+	});
 
-	if (!clientMessageResponse.ok) {
-		console.error(
-			`5. [FALHA] Falha ao enviar mensagem para o cliente. Status HTTP: ${clientMessageResponse.status}`
-		);
-		throw new Error(
-			`Falha ao enviar mensagem para o cliente via WhatsApp. Status: ${clientMessageResponse.status}`
-		);
-	}
-	console.log('5. [SUCESSO] Mensagem para o cliente enviada com sucesso!');
 	console.log('--- CONTRATOS ENVIADOS COM SUCESSO ---');
 };

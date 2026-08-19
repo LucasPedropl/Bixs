@@ -650,9 +650,9 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 
 		setIsGenerating(true);
 
+		let generatedPdfBlob: Blob;
 		try {
-			// Gera o blob do PDF com todos os dados e imagens anexas
-			const blob = await pdf(
+			generatedPdfBlob = await pdf(
 				React.createElement(ContractDocumentComponent, {
 					data: {
 						...formData,
@@ -668,19 +668,30 @@ export const useContractForm = (ContractDocumentComponent: React.ComponentType<{
 					}
 				}) as React.ReactElement<DocumentProps>
 			).toBlob();
+		} catch (error) {
+			console.error('Erro ao gerar PDF:', error);
+			setSubmitError(
+				'Não foi possível gerar o PDF. ' +
+					(error instanceof Error ? error.message : 'Tente novamente.'),
+			);
+			setIsGenerating(false);
+			return;
+		}
 
-			const url = URL.createObjectURL(blob);
-			setPdfUrl(url);
+		if (pdfUrl) {
+			URL.revokeObjectURL(pdfUrl);
+		}
+		setPdfUrl(URL.createObjectURL(generatedPdfBlob));
 
-			// Envia para o WhatsApp via serviço
-			await sendToWhatsApp(blob, formData, isDevEnvironment, TEST_PHONE);
-
+		try {
+			await sendToWhatsApp(generatedPdfBlob, formData, isDevEnvironment, TEST_PHONE);
 			setIsSubmitted(true);
 		} catch (error) {
-			console.error('Erro ao gerar PDF/Enviar WhatsApp:', error);
+			console.error('Erro ao enviar WhatsApp:', error);
 			setSubmitError(
-				'Ocorreu um erro ao gerar o PDF ou enviar para o WhatsApp. ' + 
-				(error instanceof Error ? error.message : 'Tente novamente.')
+				error instanceof Error
+					? error.message
+					: 'Não foi possível enviar o contrato pelo WhatsApp. Tente o envio manual.',
 			);
 		} finally {
 			setIsGenerating(false);

@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SignatureCanvas from 'react-signature-canvas';
 import { FileText, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
+import { BIXS_COMPANY_WHATSAPP_E164 } from '../features/contracts/constants/bixsApi';
 
 import ContractDocument from '../components/ContractDocument';
 
@@ -11,6 +12,10 @@ import { useContractForm } from '../features/contracts/hooks/useContractForm';
 
 // Componentes da feature
 import { SuccessModal } from '../features/contracts/components/SuccessModal';
+import {
+	ManualContractSendActions,
+	SendFailureModal,
+} from '../features/contracts/components/SendFailureModal';
 import { SignaturePad } from '../features/contracts/components/SignaturePad';
 import { CameraCapture } from '../features/contracts/components/CameraCapture';
 import { PricingSummary } from '../features/contracts/components/PricingSummary';
@@ -23,6 +28,7 @@ import {
 
 const Contracts: React.FC = () => {
 	const navigate = useNavigate();
+	const [isSendFailureModalOpen, setIsSendFailureModalOpen] = useState(false);
 	
 	// Inicialização do hook de câmera
 	const camera = useCamera();
@@ -46,6 +52,16 @@ const Contracts: React.FC = () => {
 		fillWithMockData,
 		generateAndSendContract,
 	} = useContractForm(ContractDocument);
+
+	const whatsappSendFailed = Boolean(pdfUrl && submitError && !isSubmitted);
+
+	useEffect(() => {
+		if (whatsappSendFailed) {
+			setIsSendFailureModalOpen(true);
+		} else {
+			setIsSendFailureModalOpen(false);
+		}
+	}, [whatsappSendFailed]);
 
 	// Referência para o Canvas de Assinatura
 	const sigCanvasRef = useRef<SignatureCanvas>(null);
@@ -130,7 +146,7 @@ const Contracts: React.FC = () => {
 					<div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
 						<div className="p-8 md:p-10">
 							{/* Alerta de erro de submissão do formulário */}
-							{submitError && (
+							{submitError && !whatsappSendFailed && (
 								<div className="p-4 mb-8 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 relative animate-in fade-in slide-in-from-top-2">
 									<AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />
 									<div className="flex-1 pr-6">
@@ -147,6 +163,25 @@ const Contracts: React.FC = () => {
 								</div>
 							)}
 
+							{whatsappSendFailed && !isSendFailureModalOpen && pdfUrl && (
+								<div className="p-4 mb-8 bg-red-50 border border-red-200 rounded-xl animate-in fade-in slide-in-from-top-2">
+									<div className="flex items-start gap-3 mb-4">
+										<AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />
+										<div>
+											<h4 className="text-red-800 font-bold">Envio automático falhou</h4>
+											<p className="text-red-700 text-sm mt-1 break-words">{submitError}</p>
+											<p className="text-slate-700 text-sm mt-3">
+												Baixe o PDF e envie para o WhatsApp da BIXs. Depois de abrir o chat, anexe o arquivo.
+											</p>
+										</div>
+									</div>
+									<ManualContractSendActions
+										pdfUrl={pdfUrl}
+										contratante={formData.contratante}
+									/>
+								</div>
+							)}
+
 							{pricing.blockEvent && (
 								<div className="p-4 mb-8 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
 									<AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />
@@ -155,7 +190,7 @@ const Contracts: React.FC = () => {
 										<p className="text-red-700 text-sm mt-1">{pricing.eventBlockMessage}</p>
 										{pricing.eventBlockMessage.includes('WhatsApp') && (
 											<a
-												href="https://wa.me/553172532104"
+												href={`https://wa.me/${BIXS_COMPANY_WHATSAPP_E164}`}
 												target="_blank"
 												rel="noopener noreferrer"
 												className="inline-block mt-2 text-sm font-bold text-red-700 underline"
@@ -311,6 +346,15 @@ const Contracts: React.FC = () => {
 					pdfUrl={pdfUrl}
 					contratante={formData.contratante}
 					onClose={handleCloseSuccess}
+				/>
+			)}
+
+			{whatsappSendFailed && isSendFailureModalOpen && pdfUrl && submitError && (
+				<SendFailureModal
+					pdfUrl={pdfUrl}
+					contratante={formData.contratante}
+					errorMessage={submitError}
+					onClose={() => setIsSendFailureModalOpen(false)}
 				/>
 			)}
 		</div>
